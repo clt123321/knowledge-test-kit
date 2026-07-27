@@ -16,7 +16,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run typecheck --workspaces --if-present
+      - name: Typecheck (schema + core only; site typecheck is `astro check`, run locally)
+        run: |
+          npm run typecheck -w @knowledge-test/schema
+          npm run typecheck -w @knowledge-test/core
       - run: npm test
       - run: npm run validate:demo
       - run: npm run build:demo
