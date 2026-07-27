@@ -1,0 +1,79 @@
+name: Deploy Content Site (reusable)
+
+# A reusable workflow that any content repository can call. It checks out
+# the caller's repo *and* the kit, builds a static site from the caller's
+# content, and deploys it to GitHub Pages.
+
+on:
+  workflow_call:
+    inputs:
+      kit_ref:
+        description: 'The kit ref (tag / branch / SHA) to build against.'
+        required: false
+        type: string
+        default: v0.1.0
+      content_path:
+        description: 'Path inside the caller repository that holds the bank.'
+        required: false
+        type: string
+        default: '.'
+      node_version:
+        description: 'Node.js major version'
+        required: false
+        type: string
+        default: '20'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout content repository (caller)
+        uses: actions/checkout@v4
+        with:
+          path: content-repo
+
+      - name: Checkout kit
+        uses: actions/checkout@v4
+        with:
+          repository: clt123321/knowledge-test-kit
+          ref: ${{ inputs.kit_ref }}
+          path: kit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+          cache-dependency-path: kit/package-lock.json
+
+      - name: Install kit deps
+        run: npm ci
+        working-directory: kit
+
+      - name: Validate content
+        run: node packages/cli/bin/knowledge-test.mjs validate --content ../content-repo/${{ inputs.content_path }}
+        working-directory: kit
+
+      - name: Build site
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node packages/cli/bin/knowledge-test.mjs build --content ../content-repo/${{ inputs.content_path }}
+        working-directory: kit
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: kit/apps/site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "site": {
+    "id": "demo-bank",
+    "title": "Knowledge Test Demo · 通用软件工程基础",
+    "description": "Ten generic software-engineering warm-up questions shipped with knowledge-test-kit.",
+    "language": "zh-CN",
+    "repository": "clt123321/knowledge-test-kit",
+    "publicUrl": "",
+    "logo": null
+  },
+  "content": {
+    "questionGlobs": ["questions/**/*.json"],
+    "referenceGlobs": ["references/**/*.{json,md}"],
+    "syllabusGlobs": ["syllabus/**/*.md"],
+    "moduleFile": "modules.json"
+  },
+  "review": {
+    "publicStatuses": ["agent_reviewed", "human_reviewed"],
+    "practiceStatuses": ["agent_reviewed", "human_reviewed"]
+  },
+  "exam": {
+    "singleScore": 2,
+    "multipleScore": 3,
+    "passingRatio": 0.6,
+    "shuffleQuestions": true,
+    "shuffleOptions": true,
+    "defaultSingleCount": 6,
+    "defaultMultipleCount": 3
+  },
+  "theme": {
+    "primaryColor": "#4f6bed",
+    "darkMode": true
+  }
+}

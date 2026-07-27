@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getVisibleQuestions, siteBase } from '../../lib/content';
+import { renderMathMarkdown } from '../../lib/render';
+
+const questions = await getVisibleQuestions();
+const base = siteBase();
+---
+
+<BaseLayout title="题库">
+  <h1>题库</h1>
+  <p style="color:var(--kt-color-muted)">共 {questions.length} 道题</p>
+
+  <input
+    id="kt-question-filter"
+    class="kt-search"
+    type="search"
+    placeholder="搜索题干、选项、模块…"
+    aria-label="Search questions"
+  />
+
+  <div id="kt-question-list" style="margin-top:16px">
+    {questions.map((q) => (
+      <article
+        class="kt-card"
+        data-module={q.module}
+        data-status={q.reviewStatus}
+        data-type={q.type}
+        data-search={(q.stem + ' ' + q.options.map((o) => o.text).join(' ') + ' ' + (q.subtopic ?? '')).toLowerCase()}
+      >
+        <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap: wrap">
+          <span class="kt-tag">{q.module}</span>
+          <span class={'kt-tag kt-tag-status-' + q.reviewStatus}>{q.reviewStatus}</span>
+          <span class="kt-tag">{q.type}</span>
+          {q.difficulty && <span class="kt-tag">L{q.difficulty}</span>}
+        </div>
+        <div class="kt-question-stem" set:html={renderMathMarkdown(q.stem)} />
+        <p style="margin-top:8px">
+          <a class="kt-btn kt-btn-ghost" href={base + 'questions/' + encodeURIComponent(q.id) + '/'}>查看详情 ({q.id})</a>
+        </p>
+      </article>
+    ))}
+  </div>
+
+  <script is:inline>
+    const filter = document.getElementById('kt-question-filter');
+    const list = document.getElementById('kt-question-list');
+    filter?.addEventListener('input', (e) => {
+      const q = (e.target.value || '').toLowerCase().trim();
+      for (const el of list.children) {
+        const hay = el.getAttribute('data-search') || '';
+        el.style.display = !q || hay.includes(q) ? '' : 'none';
+      }
+    });
+  </script>
+</BaseLayout>

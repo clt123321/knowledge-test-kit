@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getBank, siteBase } from '../../lib/content';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import fg from 'fast-glob';
+
+const bank = await getBank();
+const base = siteBase();
+
+interface RefEntry {
+  id: string;
+  title: string;
+  type?: string;
+  authors?: string[];
+  year?: number;
+  url?: string;
+  tier?: string;
+  summary?: string;
+}
+
+async function loadRefs(): Promise<RefEntry[]> {
+  const files = await fg(bank.config.content.referenceGlobs, { cwd: bank.contentDir, onlyFiles: true });
+  const out: RefEntry[] = [];
+  for (const rel of files) {
+    const abs = path.join(bank.contentDir, rel);
+    if (rel.endsWith('.json')) {
+      try {
+        const raw = JSON.parse(await fs.readFile(abs, 'utf8'));
+        if (Array.isArray(raw)) out.push(...(raw as RefEntry[]));
+        else if (raw && typeof raw === 'object') out.push(raw as RefEntry);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  return out;
+}
+
+const refs = await loadRefs();
+const books = refs.filter((r) => r.type === 'book');
+const papers = refs.filter((r) => r.type === 'paper');
+const docs = refs.filter((r) => r.type === 'official_docs');
+const notes = refs.filter((r) => !['book', 'paper', 'official_docs'].includes(r.type ?? 'other'));
+---
+
+<BaseLayout title="参考资料">
+  <h1>参考资料</h1>
+  <p style="color:var(--kt-color-muted)">共 {refs.length} 条 · <a href={base + 'references/books/'}>书籍</a> · <a href={base + 'references/papers/'}>论文</a> · <a href={base + 'references/docs/'}>官方文档</a></p>
+
+  {[['书籍', books, 'books'], ['论文', papers, 'papers'], ['官方文档', docs, 'docs'], ['前沿笔记 / 其他', notes, 'notes']].map(([title, items, slug]) => {
+    const arr = items as RefEntry[];
+    return arr.length > 0 && (
+      <section class="kt-card">
+        <h2>{title as string} ({arr.length})</h2>
+        <ul>
+          {arr.map((r) => (
+            <li style="margin-bottom:6px">
+              {r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}
+              {r.year && <span style="color:var(--kt-color-muted)"> ({r.year})</span>}
+              {r.tier && <span class="kt-tag" style="margin-left:8px">{r.tier}</span>}
+              {r.summary && <div style="color:var(--kt-color-muted); font-size:14px">{r.summary}</div>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  })}
+</BaseLayout>

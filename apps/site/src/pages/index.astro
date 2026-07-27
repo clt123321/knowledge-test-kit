@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSummary, getModulesResolved, siteBase } from '../lib/content';
+
+const summary = await getSummary();
+const modules = await getModulesResolved();
+const base = siteBase();
+---
+
+<BaseLayout>
+  <section class="kt-card">
+    <h1>{summary.title}</h1>
+    <p style="color:var(--kt-color-muted)">{summary.byModule.length} 模块 · {summary.totalValid} 道有效题目</p>
+
+    <div class="kt-stat-grid">
+      <div class="kt-stat">
+        <div class="kt-stat-label">Total</div>
+        <div class="kt-stat-value">{summary.totalValid}</div>
+      </div>
+      <div class="kt-stat">
+        <div class="kt-stat-label">Single</div>
+        <div class="kt-stat-value">{summary.byType.single}</div>
+      </div>
+      <div class="kt-stat">
+        <div class="kt-stat-label">Multiple</div>
+        <div class="kt-stat-value">{summary.byType.multiple}</div>
+      </div>
+      <div class="kt-stat">
+        <div class="kt-stat-label">Human reviewed</div>
+        <div class="kt-stat-value">{summary.byStatus.human_reviewed}</div>
+      </div>
+      <div class="kt-stat">
+        <div class="kt-stat-label">Agent reviewed</div>
+        <div class="kt-stat-value">{summary.byStatus.agent_reviewed}</div>
+      </div>
+    </div>
+
+    <p>
+      <a class="kt-btn" href={base + 'practice/'}>开始练习</a>
+      <a class="kt-btn kt-btn-ghost" href={base + 'questions/'}>浏览题库</a>
+    </p>
+  </section>
+
+  <section class="kt-card">
+    <h2>模块</h2>
+    <ul>
+      {modules.map((m) => {
+        const count = summary.byModule.find((x) => x.moduleId === m.id)?.count ?? 0;
+        return (
+          <li style="margin-bottom:6px">
+            <a href={base + 'modules/' + m.id + '/'}>{m.name}</a>
+            <span style="color:var(--kt-color-muted)"> · {count} 题</span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+
+  <section class="kt-card">
+    <h2>学习路径</h2>
+    <p>建议顺序：</p>
+    <ol>
+      {modules.map((m) => <li>{m.name}</li>)}
+    </ol>
+    <p style="color:var(--kt-color-muted); font-size:14px">
+      本页由 <code>modules.json</code> 顺序驱动。若需自定义路径，请编辑该文件。
+    </p>
+  </section>
+</BaseLayout>

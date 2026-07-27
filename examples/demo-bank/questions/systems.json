@@ -1,0 +1,171 @@
+[
+  {
+    "id": "DEMO-S-001",
+    "type": "single",
+    "module": "systems",
+    "subtopic": "caching",
+    "difficulty": 3,
+    "stem": "A read-heavy service uses a Redis cache in front of PostgreSQL. Which caching strategy avoids the classic \"cache-stampede\" problem after a key expires?",
+    "options": [
+      { "id": "A", "text": "Cache-aside with per-key locks (single flight)" },
+      { "id": "B", "text": "Write-through cache with no locking" },
+      { "id": "C", "text": "TTL of 0 seconds (never cache)" },
+      { "id": "D", "text": "Setting a much longer TTL and never invalidating" }
+    ],
+    "correctAnswers": ["A"],
+    "explanation": "Adding a per-key mutex (a.k.a. single-flight / request coalescing) ensures only one caller repopulates the cache while the others wait, preventing thundering-herd hits on the database.",
+    "optionExplanations": {
+      "A": "Correct.",
+      "B": "Doesn't help — writes may still coincide with a cache miss.",
+      "C": "Defeats the purpose of a cache.",
+      "D": "Trades staleness for a different (worse) failure mode."
+    },
+    "misconceptionTags": ["cache-stampede-fix-with-longer-ttl"],
+    "sourceRefs": [
+      {
+        "title": "Groupcache singleflight package",
+        "type": "official_docs",
+        "url": "https://pkg.go.dev/golang.org/x/sync/singleflight",
+        "supports": "The classic single-flight technique."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "human_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-S-002",
+    "type": "multiple",
+    "module": "systems",
+    "subtopic": "cap-theorem",
+    "difficulty": 4,
+    "stem": "Which statements about the CAP theorem are **true**? (Select all that apply.)",
+    "options": [
+      { "id": "A", "text": "During a network partition, a distributed system must choose between availability and consistency." },
+      { "id": "B", "text": "A CP system can still serve reads if a partition happens, as long as they hit the primary partition." },
+      { "id": "C", "text": "An AP system continues to serve requests during a partition at the cost of possible staleness." },
+      { "id": "D", "text": "CAP guarantees you can pick two of {C, A, P} in all circumstances, including no partition." }
+    ],
+    "correctAnswers": ["A", "B", "C"],
+    "explanation": "CAP is a partition-time trade-off; when the network is healthy you can have both consistency and availability. The choice between C and A only becomes binding under a partition. Option D misrepresents the theorem as an unconditional pick-two.",
+    "optionExplanations": {
+      "A": "Correct.",
+      "B": "Correct — CP degrades availability in the minority partition, but the majority can continue.",
+      "C": "Correct.",
+      "D": "Wrong — it's a partition-conditional trade-off, not an unconditional one."
+    },
+    "distractorRationales": {
+      "D": "The common oversimplification of CAP as an unconditional 'pick two'."
+    },
+    "misconceptionTags": ["cap-pick-two-always"],
+    "sourceRefs": [
+      {
+        "title": "You Can't Sacrifice Partition Tolerance (Coda Hale)",
+        "type": "frontier_note",
+        "url": "https://codahale.com/you-cant-sacrifice-partition-tolerance/",
+        "supports": "Explains the partition-conditional framing."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "human_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-S-003",
+    "type": "single",
+    "module": "systems",
+    "subtopic": "queues",
+    "difficulty": 3,
+    "stem": "You need exactly-once **processing** across a producer, a broker (Kafka), and a consumer. Which combination is required in practice?",
+    "options": [
+      { "id": "A", "text": "Idempotent consumer + at-least-once delivery" },
+      { "id": "B", "text": "Fire-and-forget producer + at-most-once delivery" },
+      { "id": "C", "text": "Best-effort broker with no ordering guarantees" },
+      { "id": "D", "text": "A single consumer thread per topic partition, always" }
+    ],
+    "correctAnswers": ["A"],
+    "explanation": "\"Exactly-once processing\" is achieved by making the consumer idempotent (or transactional) on top of at-least-once delivery; strictly-exactly-once end-to-end delivery over a network is a stronger property that requires coordinated writes.",
+    "optionExplanations": {
+      "A": "Correct — the standard, working recipe.",
+      "B": "That guarantees at-most-once, not exactly-once.",
+      "C": "Weakens semantics further.",
+      "D": "A performance choice, not a semantics guarantee."
+    },
+    "misconceptionTags": ["exactly-once-vs-idempotent"],
+    "sourceRefs": [
+      {
+        "title": "Kafka: exactly-once semantics (design document)",
+        "type": "official_docs",
+        "url": "https://kafka.apache.org/documentation/#semantics",
+        "supports": "Discussion of at-least-once + idempotent processing."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "agent_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-S-004-DRAFT",
+    "type": "single",
+    "module": "systems",
+    "subtopic": "reliability",
+    "difficulty": 4,
+    "stem": "(Draft / not yet reviewed) SLO of 99.9% availability over 30 days allows how many minutes of downtime?",
+    "options": [
+      { "id": "A", "text": "≈ 43 minutes" },
+      { "id": "B", "text": "≈ 4.3 hours" },
+      { "id": "C", "text": "≈ 8.6 hours" },
+      { "id": "D", "text": "≈ 45 minutes" }
+    ],
+    "correctAnswers": ["A"],
+    "explanation": "30 days ≈ 43 200 minutes; 0.1% of that ≈ 43.2 minutes.",
+    "optionExplanations": {
+      "A": "Correct.",
+      "B": "That would be ~99% SLO.",
+      "C": "That would be closer to 98.8% SLO.",
+      "D": "Close, but arithmetic is 43.2 → A is more precise."
+    },
+    "misconceptionTags": [],
+    "sourceRefs": [],
+    "source": [],
+    "reviewStatus": "draft",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-S-005-DEPRECATED",
+    "type": "single",
+    "module": "systems",
+    "subtopic": "networking",
+    "difficulty": 1,
+    "stem": "(Deprecated — question was superseded by DEMO-S-001) Which OSI layer does HTTP live at?",
+    "options": [
+      { "id": "A", "text": "Application" },
+      { "id": "B", "text": "Transport" },
+      { "id": "C", "text": "Network" },
+      { "id": "D", "text": "Physical" }
+    ],
+    "correctAnswers": ["A"],
+    "explanation": "HTTP is an application-layer protocol.",
+    "optionExplanations": {
+      "A": "Correct.",
+      "B": "TCP/UDP are transport.",
+      "C": "IP is network.",
+      "D": "Cables and radios."
+    },
+    "misconceptionTags": [],
+    "sourceRefs": [],
+    "source": [],
+    "reviewStatus": "deprecated",
+    "version": 2,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  }
+]

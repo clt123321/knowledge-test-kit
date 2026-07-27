@@ -1,0 +1,140 @@
+[
+  {
+    "id": "DEMO-A-001",
+    "type": "single",
+    "module": "algorithms",
+    "subtopic": "complexity",
+    "difficulty": 2,
+    "stem": "What is the average-case time complexity of a lookup in a well-implemented hash table with $n$ keys? $$T(n) = ?$$",
+    "options": [
+      { "id": "A", "text": "$O(1)$" },
+      { "id": "B", "text": "$O(\\log n)$" },
+      { "id": "C", "text": "$O(n)$" },
+      { "id": "D", "text": "$O(n \\log n)$" }
+    ],
+    "correctAnswers": ["A"],
+    "explanation": "Under uniform hashing with a bounded load factor, expected chain length (or probe count) is $O(1)$.",
+    "optionExplanations": {
+      "A": "Correct — the whole point of a hash table.",
+      "B": "That's a balanced BST.",
+      "C": "Only the worst case (all keys collide).",
+      "D": "That's comparison-based sorting."
+    },
+    "misconceptionTags": ["hashtable-worst-case-is-average"],
+    "sourceRefs": [
+      {
+        "title": "CLRS §11 Hash Tables",
+        "type": "book",
+        "supports": "Expected O(1) lookup under simple uniform hashing."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "human_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-A-002",
+    "type": "multiple",
+    "module": "algorithms",
+    "subtopic": "sorting",
+    "difficulty": 3,
+    "stem": "Which of the following comparison-based sorting algorithms have a **worst-case** time complexity of $O(n \\log n)$? (Select all that apply.)",
+    "options": [
+      { "id": "A", "text": "Merge sort" },
+      { "id": "B", "text": "Heap sort" },
+      { "id": "C", "text": "Quicksort (with random pivot)" },
+      { "id": "D", "text": "Bubble sort" }
+    ],
+    "correctAnswers": ["A", "B"],
+    "explanation": "Merge sort and heap sort guarantee $O(n \\log n)$ in the worst case. Randomised quicksort has expected $O(n \\log n)$ but worst-case $O(n^2)$; bubble sort is $O(n^2)$.",
+    "optionExplanations": {
+      "A": "Correct — deterministic O(n log n) worst case.",
+      "B": "Correct — O(n log n) worst case.",
+      "C": "Worst case is O(n^2) even with randomised pivot (very unlikely, but possible).",
+      "D": "Worst case is O(n^2)."
+    },
+    "distractorRationales": {
+      "C": "Confuses expected vs worst-case complexity.",
+      "D": "Confuses one of the classic O(n^2) sorts with an O(n log n) sort."
+    },
+    "misconceptionTags": ["quicksort-worst-case", "expected-vs-worst-case"],
+    "sourceRefs": [
+      {
+        "title": "CLRS §7-8",
+        "type": "book",
+        "supports": "Worst-case complexity of quicksort, merge sort, heap sort."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "human_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-A-003",
+    "type": "single",
+    "module": "algorithms",
+    "subtopic": "data-structures",
+    "difficulty": 2,
+    "stem": "Which data structure gives $O(1)$ push and $O(1)$ pop from **either end**?",
+    "options": [
+      { "id": "A", "text": "Singly-linked list" },
+      { "id": "B", "text": "Array (dynamic)" },
+      { "id": "C", "text": "Deque (double-ended queue)" },
+      { "id": "D", "text": "Binary search tree" }
+    ],
+    "correctAnswers": ["C"],
+    "explanation": "A deque supports amortised $O(1)$ operations at both ends (via a doubly-linked list or a circular buffer).",
+    "optionExplanations": {
+      "A": "Only one-end O(1); tail operations become O(n) without an explicit tail pointer.",
+      "B": "Prepends are O(n).",
+      "C": "Correct.",
+      "D": "Insertion / deletion are O(log n) at best."
+    },
+    "misconceptionTags": [],
+    "sourceRefs": [],
+    "source": [],
+    "reviewStatus": "agent_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-A-004",
+    "type": "single",
+    "module": "algorithms",
+    "subtopic": "recursion",
+    "difficulty": 4,
+    "stem": "You solve $T(n) = 2T(n/2) + O(n)$ by the master theorem. What is $T(n)$?",
+    "options": [
+      { "id": "A", "text": "$O(n)$" },
+      { "id": "B", "text": "$O(n \\log n)$" },
+      { "id": "C", "text": "$O(n^2)$" },
+      { "id": "D", "text": "$O(\\log^2 n)$" }
+    ],
+    "correctAnswers": ["B"],
+    "explanation": "This is case 2 of the master theorem: $a = 2$, $b = 2$, $\\log_b a = 1$, $f(n) = O(n) = \\Theta(n^{\\log_b a})$, so $T(n) = \\Theta(n \\log n)$.",
+    "optionExplanations": {
+      "A": "Case 1 would require $f(n) = O(n^{1-\\epsilon})$.",
+      "B": "Correct — merge-sort-style recurrence.",
+      "C": "Case 3 would require $f(n) = \\Omega(n^{1+\\epsilon})$ and regularity.",
+      "D": "That would correspond to a very different recurrence."
+    },
+    "misconceptionTags": [],
+    "sourceRefs": [
+      {
+        "title": "CLRS §4.5 Master Theorem",
+        "type": "book",
+        "supports": "Case 2 formulation."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "agent_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  }
+]

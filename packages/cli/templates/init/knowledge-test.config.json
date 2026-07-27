@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "site": {
+    "id": "{{BANK_ID}}",
+    "title": "{{BANK_TITLE}}",
+    "description": "Knowledge test bank generated with knowledge-test-kit.",
+    "language": "zh-CN",
+    "repository": "",
+    "publicUrl": "",
+    "logo": null
+  },
+  "content": {
+    "questionGlobs": ["questions/**/*.json"],
+    "referenceGlobs": ["references/**/*.{json,md}"],
+    "syllabusGlobs": ["syllabus/**/*.md"],
+    "moduleFile": "modules.json"
+  },
+  "review": {
+    "publicStatuses": ["agent_reviewed", "human_reviewed"],
+    "practiceStatuses": ["agent_reviewed", "human_reviewed"]
+  },
+  "exam": {
+    "singleScore": 2,
+    "multipleScore": 3,
+    "passingRatio": 0.6,
+    "shuffleQuestions": true,
+    "shuffleOptions": true,
+    "defaultSingleCount": 20,
+    "defaultMultipleCount": 10
+  },
+  "theme": {
+    "primaryColor": "",
+    "darkMode": true
+  }
+}

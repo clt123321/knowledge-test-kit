@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowledge-test-kit/schemas/question.schema.json",
+  "title": "Question",
+  "type": "object",
+  "required": ["id", "type", "module", "stem", "options", "correctAnswers", "explanation", "reviewStatus", "version"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "type": { "enum": ["single", "multiple"] },
+    "module": { "type": "string", "minLength": 1 },
+    "subtopic": { "type": "string" },
+    "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "stem": { "type": "string", "minLength": 1 },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "text": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "correctAnswers": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "explanation": { "type": "string", "minLength": 1 },
+    "optionExplanations": { "type": "object", "additionalProperties": { "type": "string" } },
+    "learningObjective": { "type": "string" },
+    "archetype": { "type": "string" },
+    "depth": { "type": "string" },
+    "claimType": { "type": "string" },
+    "sourceRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "type": { "enum": ["book", "paper", "official_docs", "frontier_note", "other"] },
+          "tier": { "enum": ["tier1", "tier2", "tier3"] },
+          "chapter": { "type": "string" },
+          "section": { "type": "string" },
+          "equation": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "supports": { "type": "string" }
+        }
+      }
+    },
+    "misconceptionTags": { "type": "array", "items": { "type": "string" } },
+    "distractorRationales": { "type": "object", "additionalProperties": { "type": "string" } },
+    "source": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "generationBatch": { "type": "string" },
+    "reviewStatus": { "enum": ["draft", "reviewed", "agent_reviewed", "human_reviewed", "deprecated"] },
+    "version": { "type": "integer", "minimum": 1 },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" }
+  }
+}

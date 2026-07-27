@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAllQuestionsIncludingDrafts, getVisibleQuestions, siteBase } from '../../lib/content';
+import { renderMathMarkdown } from '../../lib/render';
+
+export async function getStaticPaths() {
+  const questions = await getVisibleQuestions();
+  return questions.map((q) => ({
+    params: { id: q.id },
+    props: { question: q, allQuestions: questions },
+  }));
+}
+
+const { question, allQuestions } = Astro.props;
+const base = siteBase();
+
+const idx = allQuestions.findIndex((q) => q.id === question.id);
+const prev = idx > 0 ? allQuestions[idx - 1] : null;
+const next = idx < allQuestions.length - 1 ? allQuestions[idx + 1] : null;
+
+const rawStatus = (question as unknown as { _rawReviewStatus?: string })._rawReviewStatus;
+const editUrl =
+  question && (question as { __sourceFile?: string }).__sourceFile
+    ? undefined
+    : undefined;
+---
+
+<BaseLayout title={question.id} description={question.stem.slice(0, 140)}>
+  <nav aria-label="breadcrumb" style="font-size:14px; color:var(--kt-color-muted); margin-bottom:12px">
+    <a href={base}>首页</a> / <a href={base + 'modules/' + question.module + '/'}>{question.module}</a> / <span>{question.id}</span>
+  </nav>
+
+  <article class="kt-card">
+    <div style="display:flex; gap:8px; flex-wrap: wrap; margin-bottom:12px">
+      <span class="kt-tag">{question.module}</span>
+      {question.subtopic && <span class="kt-tag">{question.subtopic}</span>}
+      {question.difficulty && <span class="kt-tag">L{question.difficulty}</span>}
+      <span class="kt-tag">{question.type}</span>
+      <span class={'kt-tag kt-tag-status-' + question.reviewStatus}>{question.reviewStatus}</span>
+      {rawStatus && rawStatus !== question.reviewStatus && (
+        <span class="kt-tag" title="raw status in source file">raw: {rawStatus}</span>
+      )}
+    </div>
+
+    <div class="kt-question-stem" set:html={renderMathMarkdown(question.stem)} />
+
+    <ol class="kt-options">
+      {question.options.map((opt) => {
+        const isCorrect = question.correctAnswers.includes(opt.id);
+        return (
+          <li class={'kt-option ' + (isCorrect ? 'kt-option-correct' : '')}>
+            <span class="kt-option-id">{opt.id}</span>
+            <span set:html={renderMathMarkdown(opt.text)}></span>
+          </li>
+        );
+      })}
+    </ol>
+
+    <details open>
+      <summary style="cursor:pointer; font-weight:600">正确答案与解析</summary>
+      <div class="kt-details">
+        <h4>正确答案</h4>
+        <p><strong>{question.correctAnswers.join(', ')}</strong></p>
+
+        <h4>解析</h4>
+        <div set:html={renderMathMarkdown(question.explanation)}></div>
+
+        {Object.keys(question.optionExplanations ?? {}).length > 0 && (
+          <>
+            <h4>逐项解析</h4>
+            <ul>
+              {question.options.map((o) => (
+                <li>
+                  <strong>{o.id}.</strong>{' '}
+                  <span set:html={renderMathMarkdown(question.optionExplanations[o.id] ?? '（无）')}></span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {question.misconceptionTags && question.misconceptionTags.length > 0 && (
+          <>
+            <h4>常见误区</h4>
+            <p>{question.misconceptionTags.map((t) => <span class="kt-tag">{t}</span>)}</p>
+          </>
+        )}
+
+        {question.sourceRefs && question.sourceRefs.length > 0 && (
+          <>
+            <h4>来源</h4>
+            <ul>
+              {question.sourceRefs.map((s) => (
+                <li>
+                  {s.url ? <a href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title}
+                  {s.type && <> · <em>{s.type}</em></>}
+                  {s.tier && <> · <em>{s.tier}</em></>}
+                  {s.supports && <> — <span style="color:var(--kt-color-muted)">{s.supports}</span></>}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </details>
+  </article>
+
+  <nav style="display:flex; justify-content:space-between; margin-top:24px">
+    {prev ? (
+      <a class="kt-btn kt-btn-ghost" href={base + 'questions/' + encodeURIComponent(prev.id) + '/'}>
+        ← 上一题 ({prev.id})
+      </a>
+    ) : <span></span>}
+    {next ? (
+      <a class="kt-btn kt-btn-ghost" href={base + 'questions/' + encodeURIComponent(next.id) + '/'}>
+        下一题 ({next.id}) →
+      </a>
+    ) : <span></span>}
+  </nav>
+</BaseLayout>

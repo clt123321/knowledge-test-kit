@@ -1,0 +1,9 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteBase } from '../../lib/content';
+const base = siteBase();
+---
+<BaseLayout title="书籍">
+  <h1>书籍</h1>
+  <p>请查看 <a href={base + 'references/'}>参考资料主页</a>。</p>
+</BaseLayout>
