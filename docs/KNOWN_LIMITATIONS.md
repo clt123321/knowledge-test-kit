@@ -1,6 +1,18 @@
-# Known limitations (v0.1.0)
+# Known limitations (v0.1.1)
 
-This is the initial release. Expected gaps and workarounds:
+This document covers `v0.1.1`. `v0.1.1` is a CI-only hotfix over `v0.1.0`;
+no user-facing behavior changed. Expected gaps and workarounds:
+
+## `v0.1.0` tag is known-broken on public CI
+
+The `v0.1.0` tag points at commit `3c584a8`, whose `package-lock.json`
+resolves packages against `https://npm.corp.kuaishou.com/` (an internal
+mirror). Public GitHub Actions runners cannot reach that host, so `npm ci`
+silently skips packages like `zod` and `vitest`.
+
+**Fix.** `v0.1.1` re-tags on top of a lockfile regenerated against
+`https://registry.npmjs.org`. Downstream content repositories should pin
+`@v0.1.1`, not `@v0.1.0`. See `docs/RELEASE_NOTES_v0.1.1.md`.
 
 ## Not published to npm yet
 
@@ -10,7 +22,7 @@ Once ownership on the npm namespace is confirmed, the `bin` and
 `workspaces` layout is already publish-ready.
 
 **Workaround.** Point content repositories at
-`clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.0`
+`clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.1`
 for CI, and use `npm run cli -- <command>` inside a local clone for
 authoring.
 

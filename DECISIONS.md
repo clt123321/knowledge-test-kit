@@ -102,7 +102,7 @@ match the CLI's behaviour. A `v0.1.0` tag freezes both simultaneously.
 
 **Decision.** Do not publish `@clt123321/knowledge-test-kit` to npm yet.
 Consumers install by cloning this repo or by using the reusable workflow
-(`clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.0`).
+(`clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.1`).
 
 **Why.** Namespace ownership on npm is unverified at build time; the
 publish step should be a deliberate follow-up. The `bin` field, workspace

@@ -1,6 +1,6 @@
 {
   "name": "knowledge-test-kit-monorepo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Domain-agnostic knowledge test kit — static site generator, local practice engine, and content-authoring skill.",
   "license": "MIT",

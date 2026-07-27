@@ -54,7 +54,7 @@ up with only a config change (`content.questionGlobs`).
 
 2. `.github/workflows/pages.yml` (already exists in the ML compiler repo per
    the `ls` inventory — verify it references
-   `clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.0`
+   `clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.1`
    and update if not).
 
 3. If `data/questions/**/*.json` uses a different top-level structure (e.g.

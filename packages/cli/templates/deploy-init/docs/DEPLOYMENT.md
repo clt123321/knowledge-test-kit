@@ -14,7 +14,7 @@ This file was scaffolded by `knowledge-test deploy-init`.
 It calls the kit's reusable workflow at
 
 ```
-clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.0
+clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.1
 ```
 
 which:

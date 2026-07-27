@@ -30,6 +30,6 @@ npx knowledge-test dev --content .
 1. Push this repo to GitHub.
 2. Settings → Pages → Source → **GitHub Actions**.
 3. The included `.github/workflows/pages.yml` calls the kit's reusable
-   workflow at `clt123321/knowledge-test-kit@v0.1.0`.
+   workflow at `clt123321/knowledge-test-kit@v0.1.1`.
 
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) in the kit for details.

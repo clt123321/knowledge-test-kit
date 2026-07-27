@@ -23,9 +23,9 @@ concurrency:
 
 jobs:
   deploy:
-    uses: clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.0
+    uses: clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.1
     with:
-      kit_ref: v0.1.0
+      kit_ref: v0.1.1
       content_path: .
 ```
 
