@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.output/
+.astro/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Pagefind
+pagefind/
+**/public/pagefind/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.npmrc
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test artefacts
+.nyc_output/
+.tap/
+
+# Local scratch
+scratch/
+tmp/
+.tmp/
+
+# Worktrees (managed by orchestrator)
+.worktrees/

@@ -1,0 +1,34 @@
+{
+  "note": "This file records planned sub-agent lanes (see AGENTS.md §3). For v0.1.0 all lanes were executed by the orchestrator on the integration branch, but any future round can materialize these as literal `git worktree add` targets without changing file scopes.",
+  "integrationBranch": "feat/knowledge-test-kit-v1",
+  "lanes": [
+    {
+      "id": "A",
+      "branch": "agent/rl-inventory",
+      "worktree": ".worktrees/rl-inventory",
+      "writeScope": ["research/", "handoffs/rl-inventory.md"],
+      "purpose": "Read-only analysis of ../rl-question-base, produce inventory + migration map"
+    },
+    {
+      "id": "B",
+      "branch": "agent/astro-site",
+      "worktree": ".worktrees/astro-site",
+      "writeScope": ["apps/site/", "handoffs/astro-site.md"],
+      "purpose": "Astro static site + React Islands + Pagefind + KaTeX + SEO"
+    },
+    {
+      "id": "C",
+      "branch": "agent/core-engine",
+      "worktree": ".worktrees/core-engine",
+      "writeScope": ["packages/schema/", "packages/core/", "handoffs/core-engine.md"],
+      "purpose": "Zod schema, adapters, exam, scoring, storage, filtering, tests"
+    },
+    {
+      "id": "D",
+      "branch": "agent/cli-skill",
+      "worktree": ".worktrees/cli-skill",
+      "writeScope": ["packages/cli/", "skills/", "docs/", "examples/", "handoffs/cli-skill.md"],
+      "purpose": "CLI, example bank, skill, user documentation"
+    }
+  ]
+}
