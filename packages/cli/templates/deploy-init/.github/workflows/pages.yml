@@ -1,0 +1,22 @@
+name: Deploy Knowledge Test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: clt123321/knowledge-test-kit/.github/workflows/deploy-content-site.yml@v0.1.0
+    with:
+      kit_ref: v0.1.0
+      content_path: .

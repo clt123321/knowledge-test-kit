@@ -1,0 +1,29 @@
+[
+  {
+    "id": "S-001",
+    "type": "single",
+    "module": "sample",
+    "subtopic": "getting-started",
+    "difficulty": 1,
+    "stem": "What is the recommended way to run this knowledge bank locally?",
+    "options": [
+      { "id": "A", "text": "Open the JSON files directly in a browser." },
+      { "id": "B", "text": "Run `knowledge-test dev --content .` from this directory." },
+      { "id": "C", "text": "Deploy to production without testing." },
+      { "id": "D", "text": "Manually copy each question into a spreadsheet." }
+    ],
+    "correctAnswers": ["B"],
+    "explanation": "The kit ships a dev server that loads the current content directory and hot-reloads changes.",
+    "optionExplanations": {
+      "A": "JSON files aren't rendered by browsers directly.",
+      "B": "Correct.",
+      "C": "Never deploy without at least a local sanity check.",
+      "D": "Spreadsheets do not participate in the build pipeline."
+    },
+    "misconceptionTags": [],
+    "sourceRefs": [],
+    "source": [],
+    "reviewStatus": "agent_reviewed",
+    "version": 1
+  }
+]

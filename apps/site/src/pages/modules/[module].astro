@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getModulesResolved, getVisibleQuestions, siteBase } from '../../lib/content';
+import { renderMathMarkdown, stripMarkdown } from '../../lib/render';
+
+export async function getStaticPaths() {
+  const modules = await getModulesResolved();
+  return modules.map((m) => ({ params: { module: m.id }, props: { module: m } }));
+}
+
+const { module } = Astro.props;
+const questions = (await getVisibleQuestions()).filter((q) => q.module === module.id);
+const base = siteBase();
+---
+
+<BaseLayout title={module.name}>
+  <h1>{module.name}</h1>
+  <p style="color:var(--kt-color-muted)">{questions.length} 道题</p>
+
+  <ul style="list-style:none;padding:0">
+    {questions.map((q) => (
+      <li class="kt-card">
+        <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap: wrap">
+          <span class={'kt-tag kt-tag-status-' + q.reviewStatus}>{q.reviewStatus}</span>
+          <span class="kt-tag">{q.type}</span>
+          {q.difficulty && <span class="kt-tag">L{q.difficulty}</span>}
+          {q.subtopic && <span class="kt-tag">{q.subtopic}</span>}
+        </div>
+        <div class="kt-question-stem" set:html={renderMathMarkdown(q.stem)} />
+        <p style="margin-top:8px">
+          <a class="kt-btn kt-btn-ghost" href={base + 'questions/' + encodeURIComponent(q.id) + '/'}>查看详情</a>
+        </p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

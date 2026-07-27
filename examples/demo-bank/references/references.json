@@ -1,0 +1,27 @@
+[
+  {
+    "id": "clrs",
+    "type": "book",
+    "title": "Introduction to Algorithms (CLRS)",
+    "authors": ["Cormen", "Leiserson", "Rivest", "Stein"],
+    "year": 2022,
+    "tier": "tier1",
+    "summary": "Standard textbook — used for algorithms & complexity questions."
+  },
+  {
+    "id": "rfc-9110",
+    "type": "official_docs",
+    "title": "HTTP Semantics (RFC 9110)",
+    "year": 2022,
+    "url": "https://www.rfc-editor.org/rfc/rfc9110",
+    "tier": "tier1"
+  },
+  {
+    "id": "coda-hale-cap",
+    "type": "frontier_note",
+    "title": "You Can't Sacrifice Partition Tolerance",
+    "authors": ["Coda Hale"],
+    "url": "https://codahale.com/you-cant-sacrifice-partition-tolerance/",
+    "tier": "tier2"
+  }
+]

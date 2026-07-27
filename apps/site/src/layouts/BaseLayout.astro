@@ -1,0 +1,55 @@
+---
+import '../styles/global.css';
+import { getSummary, siteBase } from '../lib/content';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+}
+const { title, description, canonical } = Astro.props;
+
+const summary = await getSummary();
+const base = siteBase();
+const displayTitle = title ? `${title} · ${summary.title}` : summary.title;
+const desc = description ?? `${summary.title} — ${summary.totalValid} questions across ${summary.byModule.length} modules.`;
+---
+
+<!doctype html>
+<html lang="zh-CN" data-theme="auto">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{displayTitle}</title>
+    <meta name="description" content={desc} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:title" content={displayTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta name="generator" content="knowledge-test-kit v0.1.0" />
+  </head>
+  <body>
+    <header class="kt-header">
+      <a class="kt-brand" href={base}>{summary.title}</a>
+      <nav class="kt-nav">
+        <a href={base + 'modules/'}>模块</a>
+        <a href={base + 'questions/'}>题库</a>
+        <a href={base + 'references/'}>参考资料</a>
+        <a href={base + 'practice/'}>练习</a>
+        <a href={base + 'about/'}>关于</a>
+      </nav>
+    </header>
+    <main class="kt-container">
+      <slot />
+    </main>
+    <footer class="kt-footer">
+      <p>
+        Powered by
+        <a href="https://github.com/clt123321/knowledge-test-kit">knowledge-test-kit</a>
+        · {summary.totalValid} questions · <span data-kt-summary-status>
+          agent {summary.byStatus.agent_reviewed} / human {summary.byStatus.human_reviewed}
+        </span>
+      </p>
+    </footer>
+  </body>
+</html>

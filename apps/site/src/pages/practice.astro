@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getVisibleQuestions, getModulesResolved, getSummary } from '../lib/content';
+import PracticeIsland from '../islands/PracticeIsland';
+
+const questions = await getVisibleQuestions();
+const modules = await getModulesResolved();
+const summary = await getSummary();
+
+// Ship only the fields the practice engine needs, to keep the JS payload lean.
+const clientQuestions = questions.map((q) => ({
+  id: q.id,
+  type: q.type,
+  module: q.module,
+  difficulty: q.difficulty,
+  subtopic: q.subtopic,
+  stem: q.stem,
+  options: q.options,
+  correctAnswers: q.correctAnswers,
+  explanation: q.explanation,
+  optionExplanations: q.optionExplanations,
+}));
+
+const bankId = import.meta.env.KT_BANK_ID || summary.bankId;
+---
+
+<BaseLayout title="本地练习">
+  <h1>本地练习</h1>
+  <p style="color:var(--kt-color-muted)">
+    答题记录仅保存在浏览器 <code>localStorage</code> · 无后端 · 无账号 · 数据不出你的设备。
+    Namespace: <code>knowledge-test:{bankId}:*</code>
+  </p>
+
+  <PracticeIsland
+    client:only="react"
+    questions={clientQuestions}
+    modules={modules}
+    bankId={bankId}
+    defaultConfig={{
+      singleScore: 2,
+      multipleScore: 3,
+      passRatio: 0.6,
+      singleCount: 6,
+      multipleCount: 3,
+      shuffleQuestions: true,
+      shuffleOptions: true,
+    }}
+  />
+</BaseLayout>

@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSummary, getModulesResolved, siteBase } from '../../lib/content';
+
+const summary = await getSummary();
+const modules = await getModulesResolved();
+const base = siteBase();
+---
+
+<BaseLayout title="模块">
+  <h1>模块</h1>
+  <p style="color:var(--kt-color-muted)">共 {modules.length} 个模块 · {summary.totalValid} 道题</p>
+
+  <div>
+    {modules.map((m) => {
+      const count = summary.byModule.find((x) => x.moduleId === m.id)?.count ?? 0;
+      return (
+        <article class="kt-card">
+          <h2 style="margin-bottom:4px">
+            <a href={base + 'modules/' + m.id + '/'}>{m.name}</a>
+          </h2>
+          <p style="color:var(--kt-color-muted); margin:0">{m.description ?? ''}</p>
+          <p style="margin-top:8px"><span class="kt-tag">{count} 题</span>{m.code && <span class="kt-tag">code {m.code}</span>}</p>
+        </article>
+      );
+    })}
+  </div>
+</BaseLayout>

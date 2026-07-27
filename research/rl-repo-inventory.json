@@ -1,0 +1,115 @@
+{
+  "repo": "../rl-question-base",
+  "internalName": "posttrain-exam",
+  "philosophy": "pure-frontend, no backend, JSON bank, Zod-validated, HashRouter, GitHub Pages relative base",
+  "stack": {
+    "react": "^18.3.1",
+    "reactRouterDom": "^6.26.2 (HashRouter)",
+    "vite": "^5.4.8",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2 (jsdom)",
+    "tailwind": "^3.4.13",
+    "katex": "^0.16.11 + react-katex ^3.0.1",
+    "zod": "^3.23.8",
+    "yaml": "^2.9.0"
+  },
+  "layout": {
+    "questionsGlob": "src/data/questions/<NN>_<slug>/questions-*.json (16 module dirs)",
+    "manifestPerDir": true,
+    "manifestFields": ["module", "name", "targetCount", "totalCount", "subtopics", "questionTypes", "archetypes", "difficulty", "depth", "sourceDistribution", "reviewStatus", "generatedBatch", "updatedAt"],
+    "exportsFile": "exports/question-bank.json (flat array)",
+    "maxPerFile": 25
+  },
+  "reviewStatuses": ["draft", "reviewed", "deprecated"],
+  "filterRules": {
+    "deprecated": "always excluded",
+    "draft": "excluded unless includeDraft=true",
+    "reviewed": "always included"
+  },
+  "storageKeys": ["posttrain-exam:records:v1", "posttrain-exam:settings:v1"],
+  "examConfigDefault": {
+    "singleCount": 40,
+    "multipleCount": 20,
+    "singleScore": 2,
+    "multipleScore": 3,
+    "passRatio": 0.6,
+    "shuffleQuestions": true,
+    "shuffleOptions": true
+  },
+  "coreQuestionSchema": {
+    "id": "string",
+    "type": "'single' | 'multiple'",
+    "module": "enum(MODULE_IDS) — RL coupling",
+    "subtopic": "string",
+    "difficulty": "1..5",
+    "stem": "string (KaTeX-embedded markdown)",
+    "options": "[{id: 'A'|'B'|.., text}]",
+    "correctAnswers": "string[]",
+    "explanation": "string",
+    "optionExplanations": "Record<optionId, string>",
+    "learningObjective": "string?",
+    "archetype": "enum(ARCHETYPES) — RL coupling",
+    "depth": "enum(DEPTHS) — RL coupling",
+    "claimType": "enum(CLAIM_TYPES) — RL coupling",
+    "sourceRefs": "SourceRef[]",
+    "misconceptionTags": "string[]",
+    "distractorRationales": "Record<optionId, string>",
+    "source": "Source[] (legacy)",
+    "reviewStatus": "'draft'|'reviewed'|'deprecated'",
+    "version": "number",
+    "createdAt": "string",
+    "updatedAt": "string"
+  },
+  "migrationDecisions": {
+    "LIFT_AS_IS": [
+      "src/lib/random.ts",
+      "src/lib/exam.ts (parameterised over BaseQuestion)",
+      "src/lib/config.ts",
+      "src/lib/utils.ts",
+      "src/components/MathText.tsx",
+      "src/types/react-katex.d.ts",
+      "tests/exam.test.ts",
+      "tests/filter.test.ts",
+      "tests/storage.test.ts (with new storage-key prefix)"
+    ],
+    "LIFT_AND_ADAPT": [
+      "src/lib/schema.ts (split into base + kit-extension, drop bank-400 rule)",
+      "src/lib/storage.ts (parameterise storage-key prefix by bank id)",
+      "tsconfig.json (Astro-compatible)",
+      "tailwind.config.js",
+      "scripts/load.ts (renamed content dir; keep recursive walker)",
+      "scripts/validate-questions.ts (new CLI entry)",
+      "tests/schema.test.ts (drop RL-specific enum tests)"
+    ],
+    "REIMPLEMENT": [
+      "src/main.tsx / src/App.tsx (Astro file-based routing)",
+      "src/hooks/ExamContext.tsx (nanostores)",
+      "src/lib/questions.ts (Astro content collections + fs adapter)",
+      "src/lib/modules.ts (per-bank config, no hard-coded enums)",
+      "src/pages/* (Astro layouts + React islands)",
+      "vite.config.ts (astro.config.mjs with env-driven base)"
+    ],
+    "SKIP": [
+      "src/data/questions/** (RL content stays in RL repo)",
+      "exports/*",
+      "scripts/build-question-bank.ts / audit-questions.ts / review/*",
+      "config/question-generation.yaml",
+      "docs/SYLLABUS.md / QUESTION_AUTHORING_GUIDE.md",
+      "references/*, reviews/*",
+      "tests/audit.test.ts, tests/round2-*, tests/question-bank.test.ts (RL-specific)"
+    ]
+  },
+  "genericCoreSeed": {
+    "linesOfCode": "~600",
+    "files": [
+      "src/lib/random.ts",
+      "src/lib/exam.ts",
+      "src/lib/config.ts",
+      "src/lib/utils.ts",
+      "src/lib/storage.ts",
+      "src/components/MathText.tsx",
+      "src/hooks/ExamContext.tsx"
+    ],
+    "note": "Almost zero RL knowledge is baked into the runtime; coupling lives in enum strings and content."
+  }
+}

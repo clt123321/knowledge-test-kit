@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSummary } from '../lib/content';
+const s = await getSummary();
+---
+<BaseLayout title="关于">
+  <h1>关于</h1>
+  <p>本站由 <a href="https://github.com/clt123321/knowledge-test-kit">knowledge-test-kit</a> 构建。</p>
+
+  <h2>数据隐私</h2>
+  <ul>
+    <li>没有账号系统。</li>
+    <li>没有后端、没有数据库。</li>
+    <li>答题记录、错题、置信度等信息仅保存在你自己的浏览器 <code>localStorage</code> 中。</li>
+    <li>Namespace: <code>knowledge-test:{s.bankId}:*</code>；清除站点数据即可删除。</li>
+    <li>题库全文可从 <a href="https://github.com/clt123321/knowledge-test-kit">GitHub 仓库</a> 复现。</li>
+  </ul>
+
+  <h2>题目统计</h2>
+  <ul>
+    <li>{s.totalValid} 道有效题目（{s.totalRaw} 道原始，{s.totalIssues} 个校验问题）</li>
+    <li>模块：{s.byModule.length}</li>
+    <li>状态：草稿 {s.byStatus.draft} · Agent 审核 {s.byStatus.agent_reviewed} · Human 审核 {s.byStatus.human_reviewed} · 已弃用 {s.byStatus.deprecated}</li>
+  </ul>
+</BaseLayout>

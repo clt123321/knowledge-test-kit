@@ -1,0 +1,23 @@
+[
+  {
+    "id": "basics",
+    "code": "A",
+    "name": "基础概念 · Basics",
+    "description": "Core software-engineering vocabulary.",
+    "order": 1
+  },
+  {
+    "id": "algorithms",
+    "code": "B",
+    "name": "算法与复杂度 · Algorithms",
+    "description": "Complexity, common data structures, sorting.",
+    "order": 2
+  },
+  {
+    "id": "systems",
+    "code": "C",
+    "name": "系统设计 · Systems",
+    "description": "Reliability, caching, distributed systems.",
+    "order": 3
+  }
+]

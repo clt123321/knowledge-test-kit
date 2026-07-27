@@ -1,0 +1,9 @@
+[
+  {
+    "id": "sample",
+    "code": "S",
+    "name": "示例模块 · Sample module",
+    "description": "Replace me with your real modules.",
+    "order": 1
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "name": "@knowledge-test/cli",
+  "version": "0.1.0",
+  "description": "The `knowledge-test` command-line interface",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "knowledge-test": "./bin/knowledge-test.mjs",
+    "kt": "./bin/knowledge-test.mjs"
+  },
+  "main": "./src/index.mjs",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "echo 'skip typecheck for JS CLI'"
+  },
+  "dependencies": {
+    "@knowledge-test/core": "0.1.0",
+    "@knowledge-test/schema": "0.1.0",
+    "fast-glob": "^3.3.2",
+    "tsx": "^4.19.1"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.2"
+  }
+}

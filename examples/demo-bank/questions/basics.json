@@ -1,0 +1,110 @@
+[
+  {
+    "id": "DEMO-B-001",
+    "type": "single",
+    "module": "basics",
+    "subtopic": "version-control",
+    "difficulty": 1,
+    "stem": "Which command creates a new local branch **and** switches to it in Git 2.23+?",
+    "options": [
+      { "id": "A", "text": "`git branch new-feature`" },
+      { "id": "B", "text": "`git switch -c new-feature`" },
+      { "id": "C", "text": "`git checkout new-feature`" },
+      { "id": "D", "text": "`git reset --hard new-feature`" }
+    ],
+    "correctAnswers": ["B"],
+    "explanation": "`git switch -c` is the modern, purpose-built command; the older `git checkout -b` still works but is discouraged for new material.",
+    "optionExplanations": {
+      "A": "Creates the branch without switching.",
+      "B": "Correct — combines create + switch.",
+      "C": "Without `-b` this only switches to an existing branch.",
+      "D": "`reset` rewrites history and does not create branches."
+    },
+    "misconceptionTags": ["git-checkout-vs-switch"],
+    "sourceRefs": [
+      {
+        "title": "Git 2.23 Release Notes",
+        "type": "official_docs",
+        "url": "https://github.blog/2019-08-16-highlights-from-git-2-23/",
+        "supports": "Introduces `git switch` and `git restore`."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "human_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-B-002",
+    "type": "single",
+    "module": "basics",
+    "subtopic": "http",
+    "difficulty": 1,
+    "stem": "Which HTTP status code family indicates a **client error**?",
+    "options": [
+      { "id": "A", "text": "1xx" },
+      { "id": "B", "text": "2xx" },
+      { "id": "C", "text": "4xx" },
+      { "id": "D", "text": "5xx" }
+    ],
+    "correctAnswers": ["C"],
+    "explanation": "4xx is the standard client-error family (e.g. 400 Bad Request, 404 Not Found).",
+    "optionExplanations": {
+      "A": "Informational.",
+      "B": "Success.",
+      "C": "Correct — client error.",
+      "D": "Server error."
+    },
+    "misconceptionTags": [],
+    "sourceRefs": [
+      {
+        "title": "RFC 9110 §15",
+        "type": "official_docs",
+        "url": "https://www.rfc-editor.org/rfc/rfc9110#section-15",
+        "supports": "Defines HTTP status code families."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "agent_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  },
+  {
+    "id": "DEMO-B-003",
+    "type": "single",
+    "module": "basics",
+    "subtopic": "encoding",
+    "difficulty": 2,
+    "stem": "Given the string `\"héllo\"`, how many **bytes** does it take when encoded as UTF-8?",
+    "options": [
+      { "id": "A", "text": "4" },
+      { "id": "B", "text": "5" },
+      { "id": "C", "text": "6" },
+      { "id": "D", "text": "8" }
+    ],
+    "correctAnswers": ["C"],
+    "explanation": "`h`, `l`, `l`, `o` are 1 byte each (4 bytes); `é` (U+00E9) needs 2 bytes in UTF-8, giving 6.",
+    "optionExplanations": {
+      "A": "That would ignore the multi-byte `é`.",
+      "B": "Off by one — the accented character is 2 bytes, not 1.",
+      "C": "Correct: 4 ASCII bytes + 2 bytes for `é`.",
+      "D": "Would only be true if every character were 2 bytes."
+    },
+    "misconceptionTags": ["utf8-length-equals-char-count"],
+    "sourceRefs": [
+      {
+        "title": "UTF-8, a transformation format of ISO 10646 (RFC 3629)",
+        "type": "official_docs",
+        "url": "https://www.rfc-editor.org/rfc/rfc3629",
+        "supports": "Byte counts of common Latin-1 code points."
+      }
+    ],
+    "source": [],
+    "reviewStatus": "agent_reviewed",
+    "version": 1,
+    "createdAt": "2026-07-27",
+    "updatedAt": "2026-07-27"
+  }
+]
