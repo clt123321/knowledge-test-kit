@@ -3,11 +3,6 @@ name: Deploy Demo
 on:
   push:
     branches: [main]
-    paths:
-      - 'apps/**'
-      - 'packages/**'
-      - 'examples/demo-bank/**'
-      - '.github/workflows/deploy-demo.yml'
   workflow_dispatch:
 
 permissions:
