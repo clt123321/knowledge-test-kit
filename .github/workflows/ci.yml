@@ -16,17 +16,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Debug workspace layout
-        run: |
-          set -x
-          node -v
-          npm -v
-          ls -la node_modules/vitest 2>&1 | head -3 || echo "no vitest at root"
-          ls -la node_modules/zod 2>&1 | head -3 || echo "no zod at root"
-          ls -la packages/schema/node_modules 2>&1 || echo "no schema/node_modules"
-          ls -la packages/core/node_modules 2>&1 || echo "no core/node_modules"
-          node -e "console.log('vitest:', require.resolve('vitest', { paths: [process.cwd()+'/packages/schema']}))" 2>&1 || echo "vitest not resolvable from schema"
-          node -e "console.log('zod:', require.resolve('zod', { paths: [process.cwd()+'/packages/schema']}))" 2>&1 || echo "zod not resolvable from schema"
       - name: Typecheck (schema + core only; site typecheck is `astro check`, run locally)
         run: |
           npm run typecheck -w @knowledge-test/schema
