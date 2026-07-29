@@ -1,23 +1,48 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getVisibleQuestions, siteBase } from '../../lib/content';
+import { getModulesResolved, getVisibleQuestions, siteBase } from '../../lib/content';
 import { renderMathMarkdown } from '../../lib/render';
 
 const questions = await getVisibleQuestions();
+const modules = await getModulesResolved();
 const base = siteBase();
 ---
 
 <BaseLayout title="题库">
   <h1>题库</h1>
-  <p style="color:var(--kt-color-muted)">共 {questions.length} 道题</p>
+  <p style="color:var(--kt-color-muted)">
+    模块入口和题库浏览已经合并。你可以按模块、题型和关键词组合筛选，再进入单题详情。
+  </p>
 
-  <input
-    id="kt-question-filter"
-    class="kt-search"
-    type="search"
-    placeholder="搜索题干、选项、模块…"
-    aria-label="Search questions"
-  />
+  <div class="kt-filter-row">
+    <input
+      id="kt-question-filter"
+      class="kt-search"
+      type="search"
+      placeholder="搜索题干、选项、子主题…"
+      aria-label="Search questions"
+    />
+    <select id="kt-module-filter" class="kt-search" aria-label="按模块筛选">
+      <option value="">全部模块</option>
+      {modules.map((module) => (
+        <option value={module.id}>{module.name}</option>
+      ))}
+    </select>
+    <select id="kt-type-filter" class="kt-search" aria-label="按题型筛选">
+      <option value="">全部题型</option>
+      <option value="single">单选</option>
+      <option value="multiple">多选</option>
+    </select>
+  </div>
+
+  <div class="kt-chip-row">
+    <a class="kt-chip" href={base + 'questions/'}>全部题目</a>
+    {modules.map((module) => (
+      <a class="kt-chip" href={base + 'questions/?module=' + encodeURIComponent(module.id)}>
+        {module.name}
+      </a>
+    ))}
+  </div>
 
   <div id="kt-question-list" style="margin-top:16px">
     {questions.map((q) => (
@@ -44,13 +69,43 @@ const base = siteBase();
 
   <script is:inline>
     const filter = document.getElementById('kt-question-filter');
+    const moduleFilter = document.getElementById('kt-module-filter');
+    const typeFilter = document.getElementById('kt-type-filter');
     const list = document.getElementById('kt-question-list');
-    filter?.addEventListener('input', (e) => {
-      const q = (e.target.value || '').toLowerCase().trim();
+
+    const params = new URLSearchParams(window.location.search);
+    if (filter && params.get('q')) filter.value = params.get('q');
+    if (moduleFilter && params.get('module')) moduleFilter.value = params.get('module');
+    if (typeFilter && params.get('type')) typeFilter.value = params.get('type');
+
+    const applyFilters = () => {
+      const q = (filter?.value || '').toLowerCase().trim();
+      const moduleValue = moduleFilter?.value || '';
+      const typeValue = typeFilter?.value || '';
       for (const el of list.children) {
         const hay = el.getAttribute('data-search') || '';
-        el.style.display = !q || hay.includes(q) ? '' : 'none';
+        const moduleMatch = !moduleValue || el.getAttribute('data-module') === moduleValue;
+        const typeMatch = !typeValue || el.getAttribute('data-type') === typeValue;
+        const textMatch = !q || hay.includes(q);
+        el.style.display = moduleMatch && typeMatch && textMatch ? '' : 'none';
       }
-    });
+
+      const next = new URLSearchParams();
+      if (q) next.set('q', q);
+      if (moduleValue) next.set('module', moduleValue);
+      if (typeValue) next.set('type', typeValue);
+      history.replaceState({}, '', next.toString() ? `${window.location.pathname}?${next}` : window.location.pathname);
+
+      document.querySelectorAll('.kt-chip-row .kt-chip').forEach((chip) => chip.classList.remove('kt-chip-active'));
+      const activeChip = document.querySelector(
+        `.kt-chip-row a[href="${moduleValue ? `${window.location.pathname}?module=${encodeURIComponent(moduleValue)}` : window.location.pathname}"]`,
+      );
+      activeChip?.classList.add('kt-chip-active');
+    };
+
+    filter?.addEventListener('input', applyFilters);
+    moduleFilter?.addEventListener('change', applyFilters);
+    typeFilter?.addEventListener('change', applyFilters);
+    applyFilters();
   </script>
 </BaseLayout>

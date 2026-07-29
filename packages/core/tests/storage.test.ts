@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { makeStorage, makeExamRecord, DEFAULT_SETTINGS, type ExamRecord } from '../src/storage/index.js';
+import {
+  makeStorage,
+  makeExamRecord,
+  DEFAULT_SETTINGS,
+  summarizePracticeProgress,
+  type ExamRecord,
+} from '../src/storage/index.js';
 import { scorePaper } from '../src/scoring/index.js';
 import { buildComprehensivePaper, DEFAULT_EXAM_CONFIG } from '../src/exam/index.js';
 import type { Question } from '@knowledge-test/schema';
@@ -143,5 +149,73 @@ describe('makeStorage', () => {
     });
     capped.replaceAllRecords([rec('a'), rec('b'), rec('c'), rec('d'), rec('e'), rec('f')]);
     expect(capped.loadRecords()).toHaveLength(5);
+  });
+});
+
+describe('summarizePracticeProgress', () => {
+  it('aggregates coverage, wrong pool, and module progress', () => {
+    const summary = summarizePracticeProgress({
+      questions: [
+        { id: 'q1', module: 'm1' },
+        { id: 'q2', module: 'm1' },
+        { id: 'q3', module: 'm2' },
+        { id: 'q4', module: 'm2' },
+      ],
+      records: [
+        {
+          examId: 'e1',
+          submittedAt: '2026-07-29T10:00:00.000Z',
+          questionIds: ['q1', 'q2'],
+          wrongQuestionIds: ['q2'],
+          score: 2,
+          maxScore: 4,
+        },
+        {
+          examId: 'e2',
+          submittedAt: '2026-07-28T10:00:00.000Z',
+          questionIds: ['q2', 'q3'],
+          wrongQuestionIds: ['q3'],
+          score: 3,
+          maxScore: 4,
+        },
+      ],
+      now: '2026-07-29T12:00:00.000Z',
+    });
+
+    expect(summary.totalQuestions).toBe(4);
+    expect(summary.totalAttempts).toBe(2);
+    expect(summary.coveredQuestions).toBe(3);
+    expect(summary.coverageRatio).toBe(0.75);
+    expect(summary.uniqueWrongQuestions).toBe(2);
+    expect(summary.wrongRatio).toBe(0.5);
+    expect(summary.recent7DayAttempts).toBe(2);
+    expect(summary.moduleCoverage).toEqual([
+      { moduleId: 'm1', totalQuestions: 2, coveredQuestions: 2, coverageRatio: 1 },
+      { moduleId: 'm2', totalQuestions: 2, coveredQuestions: 1, coverageRatio: 0.5 },
+    ]);
+  });
+
+  it('limits recent accuracy to the latest ten records in chronological order', () => {
+    const summary = summarizePracticeProgress({
+      questions: [
+        { id: 'q1', module: 'm1' },
+        { id: 'q2', module: 'm1' },
+      ],
+      records: Array.from({ length: 12 }, (_, index) => ({
+        examId: `e${index + 1}`,
+        submittedAt: `2026-07-${String(index + 1).padStart(2, '0')}T00:00:00.000Z`,
+        questionIds: ['q1', 'q2'],
+        wrongQuestionIds: index % 2 === 0 ? ['q2'] : [],
+        score: index % 2 === 0 ? 1 : 2,
+        maxScore: 2,
+      })),
+      now: '2026-07-29T12:00:00.000Z',
+    });
+
+    expect(summary.recentAccuracy).toHaveLength(10);
+    expect(summary.recentAccuracy[0]?.examId).toBe('e3');
+    expect(summary.recentAccuracy[9]?.examId).toBe('e12');
+    expect(summary.recentAccuracy[0]?.accuracyRatio).toBe(0.5);
+    expect(summary.recentAccuracy[1]?.accuracyRatio).toBe(1);
   });
 });

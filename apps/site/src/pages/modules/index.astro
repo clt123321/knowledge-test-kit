@@ -9,7 +9,13 @@ const base = siteBase();
 
 <BaseLayout title="模块">
   <h1>模块</h1>
-  <p style="color:var(--kt-color-muted)">共 {modules.length} 个模块 · {summary.totalValid} 道题</p>
+  <p style="color:var(--kt-color-muted)">
+    模块浏览已并入题库筛选器。你可以先从这里选模块，再进入统一题库页面继续按关键词、题型组合筛选。
+  </p>
+
+  <p>
+    <a class="kt-btn" href={base + 'questions/'}>打开统一题库筛选器</a>
+  </p>
 
   <div>
     {modules.map((m) => {
@@ -17,10 +23,18 @@ const base = siteBase();
       return (
         <article class="kt-card">
           <h2 style="margin-bottom:4px">
-            <a href={base + 'modules/' + m.id + '/'}>{m.name}</a>
+            <a href={base + 'questions/?module=' + encodeURIComponent(m.id)}>{m.name}</a>
           </h2>
           <p style="color:var(--kt-color-muted); margin:0">{m.description ?? ''}</p>
-          <p style="margin-top:8px"><span class="kt-tag">{count} 题</span>{m.code && <span class="kt-tag">code {m.code}</span>}</p>
+          <p style="margin-top:8px">
+            <span class="kt-tag">{count} 题</span>
+            {m.code && <span class="kt-tag">code {m.code}</span>}
+          </p>
+          <p style="margin:8px 0 0">
+            <a class="kt-btn kt-btn-ghost" href={base + 'questions/?module=' + encodeURIComponent(m.id)}>
+              进入该模块题库
+            </a>
+          </p>
         </article>
       );
     })}

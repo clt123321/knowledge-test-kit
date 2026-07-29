@@ -1,7 +1,8 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { summarizePracticeProgress } from '@knowledge-test/core/storage';
 
 /**
- * Standalone practice engine.
+ * Standalone exam engine.
  *
  * Pure React, no framework routing. Uses `localStorage` under
  * `knowledge-test:<bankId>:*` for persistence.
@@ -31,7 +32,7 @@ interface ModuleLite {
 interface ExamRecord {
   examId: string;
   bankId: string;
-  mode: 'comprehensive' | 'module' | 'retry-wrong' | 'random';
+  mode: 'comprehensive' | 'module' | 'retry-wrong' | 'retry-correct' | 'random';
   moduleId?: string;
   startedAt: string;
   submittedAt: string;
@@ -42,6 +43,7 @@ interface ExamRecord {
   passScore: number;
   passed: boolean;
   wrongQuestionIds: string[];
+  durationSeconds?: number;
 }
 
 interface Props {
@@ -99,6 +101,53 @@ function safeSet(k: string, v: unknown) {
   }
 }
 
+function percentLabel(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+function shortDateLabel(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function formatDuration(totalSeconds: number): string {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = safe % 60;
+  if (hours > 0) {
+    return `${hours}小时 ${String(minutes).padStart(2, '0')}分 ${String(seconds).padStart(2, '0')}秒`;
+  }
+  return `${minutes}分 ${String(seconds).padStart(2, '0')}秒`;
+}
+
+function computeDurationSeconds(startedAt: string, submittedAt: string): number {
+  const startedMs = new Date(startedAt).getTime();
+  const submittedMs = new Date(submittedAt).getTime();
+  if (!Number.isFinite(startedMs) || !Number.isFinite(submittedMs)) return 0;
+  return Math.max(0, Math.round((submittedMs - startedMs) / 1000));
+}
+
+function sanitizeCountInput(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  return digits.replace(/^0+(?=\d)/, '');
+}
+
+function parseCountInput(value: string, fallback = 0): number {
+  if (!value.trim()) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
+}
+
+function modeLabel(mode: ExamRecord['mode'] | 'random'): string {
+  if (mode === 'comprehensive') return '综合考试';
+  if (mode === 'module') return '按模块考试';
+  if (mode === 'random') return '随机抽题';
+  if (mode === 'retry-wrong') return '错题集';
+  return '对题集';
+}
+
 /* -- component ------------------------------------------------------------- */
 
 type Phase = 'setup' | 'running' | 'result';
@@ -109,21 +158,160 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [mode, setMode] = useState<'comprehensive' | 'module' | 'random'>('comprehensive');
+  const [paperMode, setPaperMode] = useState<ExamRecord['mode']>('comprehensive');
   const [moduleId, setModuleId] = useState<string>(modules[0]?.id ?? '');
-  const [singleCount, setSingleCount] = useState(defaultConfig.singleCount);
-  const [multipleCount, setMultipleCount] = useState(defaultConfig.multipleCount);
-  const [randomCount, setRandomCount] = useState(10);
+  const [singleCountInput, setSingleCountInput] = useState(String(defaultConfig.singleCount));
+  const [multipleCountInput, setMultipleCountInput] = useState(String(defaultConfig.multipleCount));
+  const [randomCountInput, setRandomCountInput] = useState('10');
+  const [reviewModuleId, setReviewModuleId] = useState<string>('all');
 
   const [paper, setPaper] = useState<PQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [current, setCurrent] = useState(0);
   const [startedAt, setStartedAt] = useState<string>('');
   const [lastRecord, setLastRecord] = useState<ExamRecord | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [activeTrendExamId, setActiveTrendExamId] = useState<string | null>(null);
 
   const [records, setRecords] = useState<ExamRecord[]>(() => safeGet<ExamRecord[]>(RECORDS_KEY, []));
   useEffect(() => {
     setRecords(safeGet<ExamRecord[]>(RECORDS_KEY, []));
   }, [RECORDS_KEY]);
+
+  const moduleNameMap = useMemo(
+    () => new Map(modules.map((module) => [module.id, module.name])),
+    [modules],
+  );
+  const progress = useMemo(
+    () =>
+      summarizePracticeProgress({
+        questions: questions.map((question) => ({ id: question.id, module: question.module })),
+        records,
+      }),
+    [questions, records],
+  );
+  const orderedModuleCoverage = useMemo(() => {
+    const order = new Map(modules.map((module, index) => [module.id, index]));
+    return [...progress.moduleCoverage].sort((a, b) => {
+      const aOrder = order.get(a.moduleId) ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = order.get(b.moduleId) ?? Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return a.moduleId.localeCompare(b.moduleId);
+    });
+  }, [modules, progress.moduleCoverage]);
+  const wrongQuestionIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const record of records) {
+      for (const questionId of record.wrongQuestionIds) ids.add(questionId);
+    }
+    return ids;
+  }, [records]);
+  const correctQuestionIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const record of records) {
+      const wrong = new Set(record.wrongQuestionIds);
+      for (const questionId of record.questionIds) {
+        if (!wrong.has(questionId)) ids.add(questionId);
+      }
+    }
+    return ids;
+  }, [records]);
+  const availableWrongCount = useMemo(() => {
+    return questions.filter(
+      (question) =>
+        wrongQuestionIds.has(question.id) &&
+        (reviewModuleId === 'all' || question.module === reviewModuleId),
+    ).length;
+  }, [questions, reviewModuleId, wrongQuestionIds]);
+  const availableCorrectCount = useMemo(() => {
+    return questions.filter(
+      (question) =>
+        correctQuestionIds.has(question.id) &&
+        (reviewModuleId === 'all' || question.module === reviewModuleId),
+    ).length;
+  }, [correctQuestionIds, questions, reviewModuleId]);
+  const activeTrend =
+    progress.recentAccuracy.find((point) => point.examId === activeTrendExamId) ??
+    progress.recentAccuracy[progress.recentAccuracy.length - 1] ??
+    null;
+  const activeExamSummary = useMemo(() => {
+    const singleCount = paper.filter((question) => question.type === 'single').length;
+    const multipleCount = paper.filter((question) => question.type === 'multiple').length;
+    const moduleIds = [...new Set(paper.map((question) => question.module))];
+    const totalScore =
+      singleCount * defaultConfig.singleScore + multipleCount * defaultConfig.multipleScore;
+    const passScore = Math.ceil(totalScore * defaultConfig.passRatio);
+
+    let scope = '全部模块';
+    if (moduleIds.length === 1) {
+      scope = moduleNameMap.get(moduleIds[0]) ?? moduleIds[0];
+    } else if (moduleIds.length > 1 && moduleIds.length < modules.length) {
+      scope = `${moduleIds.length} 个模块`;
+    }
+
+    return {
+      scope,
+      singleCount,
+      multipleCount,
+      totalQuestions: paper.length,
+      totalScore,
+      passScore,
+    };
+  }, [
+    defaultConfig.multipleScore,
+    defaultConfig.passRatio,
+    defaultConfig.singleScore,
+    moduleNameMap,
+    modules.length,
+    paper,
+  ]);
+
+  useEffect(() => {
+    if (phase !== 'running' || !startedAt) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const tick = () => {
+      const startedMs = new Date(startedAt).getTime();
+      if (!Number.isFinite(startedMs)) {
+        setElapsedSeconds(0);
+        return;
+      }
+      setElapsedSeconds(Math.max(0, Math.round((Date.now() - startedMs) / 1000)));
+    };
+
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [phase, startedAt]);
+
+  useEffect(() => {
+    if (phase !== 'running') return;
+
+    const message = '当前考试尚未交卷，是否退出考试？';
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    const clickHandler = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (!target) return;
+      const href = target.getAttribute('href');
+      if (!href || href.startsWith('#')) return;
+      if (!window.confirm(message)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    window.addEventListener('beforeunload', beforeUnload);
+    document.addEventListener('click', clickHandler, true);
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload);
+      document.removeEventListener('click', clickHandler, true);
+    };
+  }, [phase]);
 
   function start() {
     let pool: PQuestion[];
@@ -132,22 +320,27 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
 
     let picked: PQuestion[];
     if (mode === 'random') {
-      picked = sample(pool, randomCount);
+      picked = sample(pool, parseCountInput(randomCountInput, 10));
     } else {
       const singles = pool.filter((q) => q.type === 'single');
       const multiples = pool.filter((q) => q.type === 'multiple');
-      picked = [...sample(singles, singleCount), ...sample(multiples, multipleCount)];
+      picked = [
+        ...sample(singles, parseCountInput(singleCountInput, defaultConfig.singleCount)),
+        ...sample(multiples, parseCountInput(multipleCountInput, defaultConfig.multipleCount)),
+      ];
     }
     if (defaultConfig.shuffleQuestions) picked = shuffle(picked);
     if (defaultConfig.shuffleOptions) picked = picked.map((q) => ({ ...q, options: shuffle(q.options) }));
     if (picked.length === 0) {
-      alert('No questions in the selected pool.');
+      alert('当前筛选条件下没有可用题目，请调整后再试。');
       return;
     }
     setPaper(picked);
     setAnswers({});
     setCurrent(0);
     setStartedAt(new Date().toISOString());
+    setPaperMode(mode);
+    setLastRecord(null);
     setPhase('running');
   }
 
@@ -166,6 +359,11 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
     let score = 0;
     let max = 0;
     const wrong: string[] = [];
+    const submittedAt = new Date().toISOString();
+    const activeModuleId =
+      paper.length > 0 && paper.every((question) => question.module === paper[0]?.module)
+        ? paper[0]?.module
+        : undefined;
     for (const q of paper) {
       const full = q.type === 'single' ? defaultConfig.singleScore : defaultConfig.multipleScore;
       max += full;
@@ -176,10 +374,10 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
     const record: ExamRecord = {
       examId: uid(),
       bankId,
-      mode: mode as ExamRecord['mode'],
-      moduleId: mode === 'module' ? moduleId : undefined,
+      mode: paperMode,
+      moduleId: paperMode === 'module' || paperMode === 'retry-wrong' || paperMode === 'retry-correct' ? activeModuleId : undefined,
       startedAt,
-      submittedAt: new Date().toISOString(),
+      submittedAt,
       questionIds: paper.map((q) => q.id),
       answers,
       score,
@@ -187,6 +385,7 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
       passScore,
       passed: score >= passScore,
       wrongQuestionIds: wrong,
+      durationSeconds: computeDurationSeconds(startedAt, submittedAt),
     };
     const cur = safeGet<ExamRecord[]>(RECORDS_KEY, []);
     const next = [record, ...cur].slice(0, 200);
@@ -200,14 +399,36 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
     const set = new Set(rec.wrongQuestionIds);
     const picked = questions.filter((q) => set.has(q.id));
     if (picked.length === 0) {
-      alert('No wrong questions to retry — great job!');
+      alert('这份记录里没有可重做的错题。');
       return;
     }
     setPaper(defaultConfig.shuffleQuestions ? shuffle(picked) : picked);
     setAnswers({});
     setCurrent(0);
     setStartedAt(new Date().toISOString());
+    setPaperMode('retry-wrong');
     setMode('comprehensive');
+    setLastRecord(null);
+    setPhase('running');
+  }
+
+  function startReview(modeToRun: 'retry-wrong' | 'retry-correct') {
+    const sourceSet = modeToRun === 'retry-wrong' ? wrongQuestionIds : correctQuestionIds;
+    const picked = questions.filter(
+      (question) =>
+        sourceSet.has(question.id) &&
+        (reviewModuleId === 'all' || question.module === reviewModuleId),
+    );
+    if (picked.length === 0) {
+      alert(modeToRun === 'retry-wrong' ? '当前筛选下还没有错题记录。' : '当前筛选下还没有对题记录。');
+      return;
+    }
+    setPaper(defaultConfig.shuffleQuestions ? shuffle(picked) : picked);
+    setAnswers({});
+    setCurrent(0);
+    setStartedAt(new Date().toISOString());
+    setPaperMode(modeToRun);
+    setLastRecord(null);
     setPhase('running');
   }
 
@@ -228,15 +449,15 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
         if (!Array.isArray(raw)) throw new Error('expected array');
         safeSet(RECORDS_KEY, raw);
         setRecords(raw);
-        alert(`Imported ${raw.length} record(s).`);
+        alert(`已导入 ${raw.length} 条记录。`);
       } catch (e) {
-        alert('Import failed: ' + (e as Error).message);
+        alert('导入失败：' + (e as Error).message);
       }
     };
     reader.readAsText(file);
   }
   function clearAll() {
-    if (!confirm('Delete ALL records for this bank?')) return;
+    if (!confirm('确定要清空当前题库的全部本地考试记录吗？')) return;
     try {
       localStorage.removeItem(RECORDS_KEY);
     } catch {
@@ -245,19 +466,153 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
     setRecords([]);
   }
 
+  function deleteRecord(examId: string) {
+    if (!window.confirm('确定删除这条历史记录吗？')) return;
+    const next = records.filter((record) => record.examId !== examId);
+    safeSet(RECORDS_KEY, next);
+    setRecords(next);
+  }
+
+  function exitExam() {
+    if (!window.confirm('当前考试尚未交卷，是否退出考试？')) return;
+    setPhase('setup');
+    setPaper([]);
+    setAnswers({});
+    setCurrent(0);
+    setStartedAt('');
+    setElapsedSeconds(0);
+    setPaperMode('comprehensive');
+  }
+
   /* -- render ------------------------------------------------------------- */
 
   if (phase === 'setup') {
     return (
       <div>
         <section className="kt-card">
-          <h2>组卷</h2>
+          <h2>全库进度面板</h2>
+          <div className="kt-stat-grid">
+            <div className="kt-stat">
+              <div className="kt-stat-label">已覆盖题数</div>
+              <div className="kt-stat-value">
+                {progress.coveredQuestions} / {progress.totalQuestions}
+              </div>
+            </div>
+            <div className="kt-stat">
+              <div className="kt-stat-label">覆盖率</div>
+              <div className="kt-stat-value">{percentLabel(progress.coverageRatio)}</div>
+            </div>
+            <div className="kt-stat">
+              <div className="kt-stat-label">唯一错题池</div>
+              <div className="kt-stat-value">{progress.uniqueWrongQuestions}</div>
+            </div>
+            <div className="kt-stat">
+              <div className="kt-stat-label">最近 7 天考试</div>
+              <div className="kt-stat-value">{progress.recent7DayAttempts}</div>
+            </div>
+          </div>
+
+          {records.length === 0 ? (
+            <p style={{ color: 'var(--kt-color-muted)', marginTop: 0 }}>
+              还没有已交卷记录。完成任意一套考试后，这里会开始累计覆盖、错题池和正确率趋势。
+            </p>
+          ) : (
+            <p style={{ color: 'var(--kt-color-muted)', marginTop: 0 }}>
+              已累计保存 {progress.totalAttempts} 次交卷记录，错题池覆盖 {percentLabel(progress.wrongRatio)} 的题库。
+            </p>
+          )}
+
+          <div className="kt-progress-grid">
+            <div>
+              <h3 style={{ marginTop: 0 }}>各模块覆盖率</h3>
+              <div className="kt-progress-list">
+                {orderedModuleCoverage.map((module) => (
+                  <div key={module.moduleId} className="kt-progress-item">
+                    <div className="kt-progress-item-header">
+                      <strong>{moduleNameMap.get(module.moduleId) ?? module.moduleId}</strong>
+                      <span style={{ color: 'var(--kt-color-muted)' }}>
+                        {module.coveredQuestions} / {module.totalQuestions} · {percentLabel(module.coverageRatio)}
+                      </span>
+                    </div>
+                    <div className="kt-progress-bar-track">
+                      <div
+                        className="kt-progress-bar-fill"
+                        style={{ width: `${Math.max(module.coverageRatio * 100, 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 style={{ marginTop: 0 }}>最近 10 次得分率</h3>
+              {progress.recentAccuracy.length === 0 ? (
+                <p style={{ color: 'var(--kt-color-muted)' }}>还没有可展示的交卷趋势。</p>
+              ) : (
+                <>
+                  <div className="kt-trend-chart" aria-label="最近 10 次得分率趋势">
+                    {progress.recentAccuracy.map((point) => (
+                      <div key={point.examId} className="kt-trend-bar-group">
+                        <div
+                          className="kt-trend-bar"
+                          style={{ height: `${Math.max(point.accuracyRatio * 100, 8)}%` }}
+                          title={`${shortDateLabel(point.submittedAt)} · ${point.score}/${point.maxScore} · ${percentLabel(point.accuracyRatio)}`}
+                          onMouseEnter={() => setActiveTrendExamId(point.examId)}
+                        />
+                        <div className="kt-trend-label">{shortDateLabel(point.submittedAt)}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {activeTrend && (
+                    <div className="kt-trend-detail">
+                      <strong>{new Date(activeTrend.submittedAt).toLocaleString()}</strong>
+                      <span>
+                        得分率 {percentLabel(activeTrend.accuracyRatio)} · {activeTrend.score}/{activeTrend.maxScore}
+                        · {activeTrend.questionCount} 题 · 错 {activeTrend.wrongCount}
+                      </span>
+                    </div>
+                  )}
+                  <p style={{ color: 'var(--kt-color-muted)', marginBottom: 0 }}>
+                    趋势按交卷时间排序，展示最近 10 次考试得分率，鼠标移到柱子上会同步显示当次记录。
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="kt-card">
+          <div className="kt-section-head">
+            <div>
+              <h2 style={{ marginBottom: 4 }}>组卷与题集</h2>
+              <p style={{ color: 'var(--kt-color-muted)', margin: 0 }}>
+                这里直接展示当前出题会使用的模块范围和题量设置，旁边的错题集 / 对题集也会按当前筛选范围生效。
+              </p>
+            </div>
+            <div className="kt-inline-controls">
+              <select value={reviewModuleId} onChange={(e) => setReviewModuleId(e.target.value)}>
+                <option value="all">全部模块</option>
+                {modules.map((module) => (
+                  <option key={module.id} value={module.id}>
+                    {module.name}
+                  </option>
+                ))}
+              </select>
+              <button className="kt-btn kt-btn-ghost" onClick={() => startReview('retry-wrong')}>
+                错题集 ({availableWrongCount})
+              </button>
+              <button className="kt-btn kt-btn-ghost" onClick={() => startReview('retry-correct')}>
+                对题集 ({availableCorrectCount})
+              </button>
+            </div>
+          </div>
           <p>
             <label>
               <input type="radio" checked={mode === 'comprehensive'} onChange={() => setMode('comprehensive')} /> 综合考试
             </label>{' '}
             <label>
-              <input type="radio" checked={mode === 'module'} onChange={() => setMode('module')} /> 按模块练习
+              <input type="radio" checked={mode === 'module'} onChange={() => setMode('module')} /> 按模块考试
             </label>{' '}
             <label>
               <input type="radio" checked={mode === 'random'} onChange={() => setMode('random')} /> 随机抽题
@@ -284,20 +639,20 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
               <label>
                 单选数：{' '}
                 <input
-                  type="number"
-                  min={0}
-                  value={singleCount}
-                  onChange={(e) => setSingleCount(parseInt(e.target.value || '0', 10))}
+                  type="text"
+                  inputMode="numeric"
+                  value={singleCountInput}
+                  onChange={(e) => setSingleCountInput(sanitizeCountInput(e.target.value))}
                   style={{ width: 80 }}
                 />
               </label>{' '}
               <label>
                 多选数：{' '}
                 <input
-                  type="number"
-                  min={0}
-                  value={multipleCount}
-                  onChange={(e) => setMultipleCount(parseInt(e.target.value || '0', 10))}
+                  type="text"
+                  inputMode="numeric"
+                  value={multipleCountInput}
+                  onChange={(e) => setMultipleCountInput(sanitizeCountInput(e.target.value))}
                   style={{ width: 80 }}
                 />
               </label>
@@ -307,10 +662,10 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
               <label>
                 随机题数：{' '}
                 <input
-                  type="number"
-                  min={1}
-                  value={randomCount}
-                  onChange={(e) => setRandomCount(parseInt(e.target.value || '1', 10))}
+                  type="text"
+                  inputMode="numeric"
+                  value={randomCountInput}
+                  onChange={(e) => setRandomCountInput(sanitizeCountInput(e.target.value))}
                   style={{ width: 80 }}
                 />
               </label>
@@ -322,6 +677,7 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
               开始
             </button>
           </p>
+
         </section>
 
         <section className="kt-card">
@@ -341,14 +697,21 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
                 <span style={{ color: 'var(--kt-color-muted)' }}>· {new Date(r.submittedAt).toLocaleString()}</span>
               </div>
               <div style={{ fontSize: 13, color: 'var(--kt-color-muted)' }}>
-                {r.mode}
-                {r.moduleId ? ` · ${r.moduleId}` : ''} · {r.questionIds.length} 题 · 错 {r.wrongQuestionIds.length}
+                {modeLabel(r.mode)}
+                {r.moduleId ? ` · ${moduleNameMap.get(r.moduleId) ?? r.moduleId}` : ''} · {r.questionIds.length} 题
+                · 错 {r.wrongQuestionIds.length} · 用时{' '}
+                {formatDuration(r.durationSeconds ?? computeDurationSeconds(r.startedAt, r.submittedAt))}
               </div>
-              {r.wrongQuestionIds.length > 0 && (
-                <button className="kt-btn kt-btn-ghost" style={{ marginTop: 6 }} onClick={() => retryWrong(r)}>
-                  错题重做
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                {r.wrongQuestionIds.length > 0 && (
+                  <button className="kt-btn kt-btn-ghost" onClick={() => retryWrong(r)}>
+                    错题重做
+                  </button>
+                )}
+                <button className="kt-btn kt-btn-ghost" onClick={() => deleteRecord(r.examId)}>
+                  删除记录
                 </button>
-              )}
+              </div>
             </div>
           ))}
           <p style={{ marginTop: 12 }}>
@@ -381,15 +744,39 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
           <div>
             第 {current + 1} / {paper.length} 题 · <span className="kt-tag">{q.type}</span>{' '}
-            <span className="kt-tag">{q.module}</span>
+            <span className="kt-tag">{q.module}</span> <span className="kt-tag">{modeLabel(paperMode)}</span>
           </div>
           <div>
-            <button className="kt-btn kt-btn-ghost" onClick={() => setPhase('setup')}>
-              放弃
+            <span style={{ color: 'var(--kt-color-muted)', marginRight: 12 }}>已用时 {formatDuration(elapsedSeconds)}</span>
+            <button className="kt-btn kt-btn-ghost" onClick={exitExam}>
+              退出考试
             </button>{' '}
             <button className="kt-btn" onClick={submit}>
               交卷
             </button>
+          </div>
+        </div>
+        <div className="kt-summary-grid" style={{ marginTop: 0 }}>
+          <div className="kt-summary-card">
+            <div className="kt-summary-label">本场考试</div>
+            <strong>{modeLabel(paperMode)}</strong>
+            <div className="kt-summary-muted">模块范围：{activeExamSummary.scope}</div>
+          </div>
+          <div className="kt-summary-card">
+            <div className="kt-summary-label">题量</div>
+            <strong>共 {activeExamSummary.totalQuestions} 题</strong>
+            <div className="kt-summary-muted">
+              单选 {activeExamSummary.singleCount} 题 · 多选 {activeExamSummary.multipleCount} 题
+            </div>
+          </div>
+          <div className="kt-summary-card">
+            <div className="kt-summary-label">评分</div>
+            <strong>
+              及格线 {activeExamSummary.passScore} / {activeExamSummary.totalScore}
+            </strong>
+            <div className="kt-summary-muted">
+              单选 {defaultConfig.singleScore} 分 · 多选 {defaultConfig.multipleScore} 分
+            </div>
           </div>
         </div>
         <div className="kt-question-stem">
@@ -457,7 +844,8 @@ export default function PracticeIsland({ questions, modules, bankId, defaultConf
           )}
         </h2>
         <p>
-          错题：{lastRecord.wrongQuestionIds.length} 道 · 及格线：{lastRecord.passScore}
+          错题：{lastRecord.wrongQuestionIds.length} 道 · 及格线：{lastRecord.passScore} · 用时{' '}
+          {formatDuration(lastRecord.durationSeconds ?? computeDurationSeconds(lastRecord.startedAt, lastRecord.submittedAt))}
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {lastRecord.wrongQuestionIds.length > 0 && (

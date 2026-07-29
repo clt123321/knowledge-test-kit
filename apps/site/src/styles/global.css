@@ -18,9 +18,22 @@
   --kt-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
+:root[data-theme='dark'] {
+  --kt-color-bg: #0b1120;
+  --kt-color-fg: #e2e8f0;
+  --kt-color-muted: #94a3b8;
+  --kt-color-border: #1e293b;
+  --kt-color-card: #111a2e;
+  --kt-color-primary: #7c8dff;
+  --kt-color-primary-dark: #5b6ee1;
+  --kt-color-tag: #1e293b;
+  --kt-color-tag-fg: #a5b4fc;
+  --kt-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --kt-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root[data-theme='auto'],
-  :root[data-theme='dark'] {
+  :root[data-theme='auto'] {
     --kt-color-bg: #0b1120;
     --kt-color-fg: #e2e8f0;
     --kt-color-muted: #94a3b8;
@@ -79,6 +92,30 @@ a:hover {
   display: flex;
   gap: 16px;
   font-size: 14px;
+  align-items: center;
+}
+.kt-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+}
+.kt-theme-btn {
+  border: 1px solid var(--kt-color-border);
+  background: var(--kt-color-card);
+  color: var(--kt-color-fg);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.kt-theme-btn[aria-pressed='true'] {
+  border-color: var(--kt-color-primary);
+  background: var(--kt-color-tag);
+  color: var(--kt-color-primary);
+}
+.kt-theme-btn:hover {
+  border-color: var(--kt-color-primary);
 }
 .kt-footer {
   border-top: 1px solid var(--kt-color-border);
@@ -152,6 +189,85 @@ a:hover {
   background: var(--kt-color-tag);
 }
 
+.kt-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.kt-help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--kt-color-border);
+  background: var(--kt-color-card);
+  color: var(--kt-color-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: help;
+}
+
+.kt-help-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, 80vw);
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--kt-color-border);
+  background: var(--kt-color-card);
+  color: var(--kt-color-fg);
+  box-shadow: var(--kt-shadow-lg);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.kt-help:hover .kt-help-popover,
+.kt-help:focus-visible .kt-help-popover {
+  opacity: 1;
+  visibility: visible;
+}
+
+.kt-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.kt-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--kt-color-border);
+  background: var(--kt-color-bg);
+  font-size: 14px;
+}
+
+.kt-summary-label {
+  font-size: 12px;
+  color: var(--kt-color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kt-summary-muted {
+  color: var(--kt-color-muted);
+}
+
 .kt-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -175,6 +291,155 @@ a:hover {
   font-size: 24px;
   font-weight: 700;
   margin-top: 4px;
+}
+
+.kt-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.kt-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kt-progress-item-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.kt-progress-bar-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--kt-color-border);
+}
+
+.kt-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--kt-color-primary), var(--kt-color-primary-dark));
+}
+
+.kt-trend-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(24px, 1fr));
+  gap: 8px;
+  align-items: end;
+  height: 180px;
+  padding: 12px;
+  border: 1px solid var(--kt-color-border);
+  border-radius: var(--kt-radius);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--kt-color-tag) 45%, transparent));
+}
+
+.kt-trend-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  height: 100%;
+  gap: 6px;
+}
+
+.kt-trend-bar {
+  width: 100%;
+  min-height: 8px;
+  border-radius: 8px 8px 2px 2px;
+  background: linear-gradient(180deg, var(--kt-color-primary), var(--kt-color-primary-dark));
+}
+
+.kt-trend-label {
+  font-size: 11px;
+  color: var(--kt-color-muted);
+}
+
+.kt-trend-detail {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--kt-color-border);
+  background: var(--kt-color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.kt-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.kt-inline-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.kt-filter-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.kt-filter-row > * {
+  min-width: 180px;
+}
+
+.kt-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.kt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--kt-color-border);
+  border-radius: 999px;
+  color: var(--kt-color-fg);
+  background: var(--kt-color-card);
+}
+
+.kt-chip:hover {
+  text-decoration: none;
+  border-color: var(--kt-color-primary);
+}
+
+.kt-chip-active {
+  border-color: var(--kt-color-primary);
+  background: var(--kt-color-tag);
+  color: var(--kt-color-primary);
+}
+
+.kt-syllabus {
+  border: 1px solid var(--kt-color-border);
+  border-radius: var(--kt-radius);
+  padding: 16px;
+  background: var(--kt-color-bg);
+}
+
+.kt-syllabus h1,
+.kt-syllabus h2,
+.kt-syllabus h3 {
+  margin-top: 1.2em;
 }
 
 .kt-question-stem {
@@ -257,4 +522,20 @@ a:hover {
   --pagefind-ui-background: var(--kt-color-card);
   --pagefind-ui-border: var(--kt-color-border);
   --pagefind-ui-tag: var(--kt-color-tag);
+}
+
+@media (max-width: 720px) {
+  .kt-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .kt-nav {
+    flex-wrap: wrap;
+  }
+
+  .kt-filter-row > * {
+    min-width: 100%;
+  }
 }

@@ -22,4 +22,7 @@ const s = await getSummary();
     <li>模块：{s.byModule.length}</li>
     <li>状态：草稿 {s.byStatus.draft} · Agent 审核 {s.byStatus.agent_reviewed} · Human 审核 {s.byStatus.human_reviewed} · 已弃用 {s.byStatus.deprecated}</li>
   </ul>
+
+  <h2>背景色调节</h2>
+  <p>页头右上角已经提供白天 / 黑夜两种背景模式，切换结果会保存在当前浏览器里，下次打开会沿用你的选择。</p>
 </BaseLayout>
