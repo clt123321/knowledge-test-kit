@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { getSummary, siteBase } from '../lib/content';
+import { getBank, getSummary, siteBase } from '../lib/content';
 
 interface Props {
   title?: string;
@@ -9,10 +9,13 @@ interface Props {
 }
 const { title, description, canonical } = Astro.props;
 
+const bank = await getBank();
 const summary = await getSummary();
 const base = siteBase();
 const displayTitle = title ? `${title} · ${summary.title}` : summary.title;
 const desc = description ?? `${summary.title} — ${summary.totalValid} questions across ${summary.byModule.length} modules.`;
+const repository = bank.config.site.repository;
+const contentRepoUrl = repository ? `https://github.com/${repository}` : '';
 ---
 
 <!doctype html>
@@ -26,17 +29,37 @@ const desc = description ?? `${summary.title} — ${summary.totalValid} question
     <meta property="og:title" content={displayTitle} />
     <meta property="og:description" content={desc} />
     <meta property="og:type" content="website" />
-    <meta name="generator" content="knowledge-test-kit v0.1.1" />
+    <meta name="generator" content="knowledge-test-kit v0.1.2" />
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('knowledge-test:theme');
+          if (saved === 'light' || saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', saved);
+          } else {
+            document.documentElement.setAttribute(
+              'data-theme',
+              window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+            );
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    </script>
   </head>
   <body>
     <header class="kt-header">
       <a class="kt-brand" href={base}>{summary.title}</a>
       <nav class="kt-nav">
-        <a href={base + 'modules/'}>模块</a>
+        <a href={base + 'practice/'}>本地考试</a>
         <a href={base + 'questions/'}>题库</a>
-        <a href={base + 'references/'}>参考资料</a>
-        <a href={base + 'practice/'}>练习</a>
+        <a href={base + 'references/'}>考纲</a>
         <a href={base + 'about/'}>关于</a>
+        <span class="kt-theme-toggle" aria-label="背景色调节">
+          <button type="button" class="kt-theme-btn" data-kt-theme="light">白天</button>
+          <button type="button" class="kt-theme-btn" data-kt-theme="dark">黑夜</button>
+        </span>
       </nav>
     </header>
     <main class="kt-container">
@@ -44,12 +67,54 @@ const desc = description ?? `${summary.title} — ${summary.totalValid} question
     </main>
     <footer class="kt-footer">
       <p>
-        Powered by
-        <a href="https://github.com/clt123321/knowledge-test-kit">knowledge-test-kit</a>
-        · {summary.totalValid} questions · <span data-kt-summary-status>
-          agent {summary.byStatus.agent_reviewed} / human {summary.byStatus.human_reviewed}
-        </span>
+        当前题库共 {summary.totalValid} 题，公开状态为 agent {summary.byStatus.agent_reviewed} / human {summary.byStatus.human_reviewed}。
+      </p>
+      <p>
+        想一起完善这套知识站？
+        <a href="https://github.com/clt123321/knowledge-test-kit">贡献 Kit</a>
+        {contentRepoUrl && (
+          <>
+            {' '}· <a href={contentRepoUrl}>贡献当前题库</a>
+          </>
+        )}
       </p>
     </footer>
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        const buttons = Array.from(document.querySelectorAll('[data-kt-theme]'));
+        const applyTheme = (theme) => {
+          root.setAttribute('data-theme', theme);
+          buttons.forEach((button) => {
+            const active = button.getAttribute('data-kt-theme') === theme;
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+          });
+        };
+
+        let initialTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        try {
+          const saved = localStorage.getItem('knowledge-test:theme');
+          if (saved === 'light' || saved === 'dark') {
+            initialTheme = saved;
+          }
+        } catch {
+          /* ignore */
+        }
+        applyTheme(initialTheme);
+
+        buttons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const theme = button.getAttribute('data-kt-theme');
+            if (theme !== 'light' && theme !== 'dark') return;
+            applyTheme(theme);
+            try {
+              localStorage.setItem('knowledge-test:theme', theme);
+            } catch {
+              /* ignore */
+            }
+          });
+        });
+      })();
+    </script>
   </body>
 </html>

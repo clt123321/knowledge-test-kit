@@ -66,6 +66,8 @@ export interface StorageOptions {
   maxRecords?: number;
 }
 
+export * from './progress.js';
+
 export function makeStorage(opts: StorageOptions) {
   const { bankId, storage, maxRecords = 200 } = opts;
   const prefix = `knowledge-test:${bankId}`;

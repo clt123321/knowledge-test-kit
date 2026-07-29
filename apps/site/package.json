@@ -1,6 +1,6 @@
 {
   "name": "@knowledge-test/site",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Astro renderer for knowledge-test-kit content banks",
   "license": "MIT",
   "private": true,
@@ -15,8 +15,8 @@
   "dependencies": {
     "@astrojs/mdx": "^3.1.7",
     "@astrojs/react": "^3.6.2",
-    "@knowledge-test/core": "0.1.1",
-    "@knowledge-test/schema": "0.1.1",
+    "@knowledge-test/core": "0.1.2",
+    "@knowledge-test/schema": "0.1.2",
     "astro": "^4.16.6",
     "katex": "^0.16.11",
     "marked": "^14.1.3",

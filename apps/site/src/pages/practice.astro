@@ -24,12 +24,18 @@ const clientQuestions = questions.map((q) => ({
 const bankId = import.meta.env.KT_BANK_ID || summary.bankId;
 ---
 
-<BaseLayout title="本地练习">
-  <h1>本地练习</h1>
-  <p style="color:var(--kt-color-muted)">
-    答题记录仅保存在浏览器 <code>localStorage</code> · 无后端 · 无账号 · 数据不出你的设备。
-    Namespace: <code>knowledge-test:{bankId}:*</code>
-  </p>
+<BaseLayout title="本地考试">
+  <div class="kt-title-row">
+    <h1 style="margin:0">本地考试</h1>
+    <span class="kt-help" tabindex="0" aria-label="查看本地考试说明">
+      ?
+      <span class="kt-help-popover">
+        这里支持综合考试、按模块考试、随机抽题、错题复盘和对题复盘。你的答题记录会保存在当前浏览器里，
+        刷新本地服务后依然可继续查看和复盘。<br /><br />
+        不需要账号，也不会把数据上传到服务器。<code>本地存储标识：knowledge-test:{bankId}:*</code>
+      </span>
+    </span>
+  </div>
 
   <PracticeIsland
     client:only="react"

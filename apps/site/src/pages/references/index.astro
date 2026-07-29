@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getBank, siteBase } from '../../lib/content';
+import { renderMathMarkdown } from '../../lib/render';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import fg from 'fast-glob';
@@ -37,16 +38,44 @@ async function loadRefs(): Promise<RefEntry[]> {
   return out;
 }
 
+async function loadSyllabus() {
+  const files = await fg(bank.config.content.syllabusGlobs, { cwd: bank.contentDir, onlyFiles: true });
+  const preferred =
+    files.find((rel) => /syllabus|考纲/i.test(path.basename(rel))) ??
+    files.find((rel) => rel.endsWith('.md')) ??
+    null;
+  if (!preferred) return null;
+  const raw = await fs.readFile(path.join(bank.contentDir, preferred), 'utf8');
+  return {
+    relativePath: preferred,
+    html: renderMathMarkdown(raw),
+  };
+}
+
 const refs = await loadRefs();
+const syllabus = await loadSyllabus();
 const books = refs.filter((r) => r.type === 'book');
 const papers = refs.filter((r) => r.type === 'paper');
 const docs = refs.filter((r) => r.type === 'official_docs');
 const notes = refs.filter((r) => !['book', 'paper', 'official_docs'].includes(r.type ?? 'other'));
 ---
 
-<BaseLayout title="参考资料">
-  <h1>参考资料</h1>
-  <p style="color:var(--kt-color-muted)">共 {refs.length} 条 · <a href={base + 'references/books/'}>书籍</a> · <a href={base + 'references/papers/'}>论文</a> · <a href={base + 'references/docs/'}>官方文档</a></p>
+<BaseLayout title="考纲">
+  <h1>考纲</h1>
+  <p style="color:var(--kt-color-muted)">
+    这里优先展示这套题库的知识地图与维护参考。共 {refs.length} 条参考项
+    · <a href={base + 'references/books/'}>书籍</a>
+    · <a href={base + 'references/papers/'}>论文</a>
+    · <a href={base + 'references/docs/'}>官方文档</a>
+  </p>
+
+  {syllabus && (
+    <section class="kt-card">
+      <h2>考纲</h2>
+      <p style="color:var(--kt-color-muted)">来自 <code>{syllabus.relativePath}</code>，用于展示这套题库覆盖的知识地图。</p>
+      <div class="kt-syllabus" set:html={syllabus.html} />
+    </section>
+  )}
 
   {[['书籍', books, 'books'], ['论文', papers, 'papers'], ['官方文档', docs, 'docs'], ['前沿笔记 / 其他', notes, 'notes']].map(([title, items, slug]) => {
     const arr = items as RefEntry[];

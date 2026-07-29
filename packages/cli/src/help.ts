@@ -31,5 +31,5 @@ Examples:
 }
 
 export function printVersion(): void {
-  console.log('knowledge-test v0.1.1');
+  console.log('knowledge-test v0.1.2');
 }

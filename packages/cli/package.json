@@ -1,6 +1,6 @@
 {
   "name": "@knowledge-test/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The `knowledge-test` command-line interface",
   "license": "MIT",
   "type": "module",
@@ -14,8 +14,8 @@
     "typecheck": "echo 'skip typecheck for JS CLI'"
   },
   "dependencies": {
-    "@knowledge-test/core": "0.1.1",
-    "@knowledge-test/schema": "0.1.1",
+    "@knowledge-test/core": "0.1.2",
+    "@knowledge-test/schema": "0.1.2",
     "fast-glob": "^3.3.2",
     "tsx": "^4.19.1"
   },
